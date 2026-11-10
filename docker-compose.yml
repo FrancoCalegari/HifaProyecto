@@ -1,0 +1,12 @@
+services:
+  hifa:
+    build: .
+    container_name: hifa-saas
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+

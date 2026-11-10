@@ -1,0 +1,14 @@
+{
+  "name": "hifa-saas-parejas",
+  "version": "1.0.0",
+  "description": "SaaS self-hosted para organizar la vida en pareja, gustos y economía",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}
+

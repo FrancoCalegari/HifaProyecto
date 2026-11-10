@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>Hifa — SaaS para Parejas</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand-bar">
+      <h1>💞 Hifa Parejas</h1>
+      <span id="couple-badge" class="couple-pill" hidden></span>
+    </div>
+    <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+      <button type="button" id="btn-open-setup" class="btn btn-sm">⚙️ Motor / SpiderWebAPI</button>
+      <button type="button" id="btn-open-notifications" class="btn btn-sm" hidden>
+        🔔 Notificaciones <span id="notif-count" class="badge">0</span>
+      </button>
+      <button type="button" id="btn-logout" class="btn btn-sm btn-danger" hidden>Salir</button>
+    </div>
+  </header>
+
+  <div id="status-banner" role="status" aria-live="polite" style="padding:0 1.5rem;"></div>
+
+  <!-- Auth View (Before Login) -->
+  <main id="auth-view" class="main-area" hidden>
+    <div class="grid-2">
+      <section class="card" aria-labelledby="login-heading">
+        <h2 id="login-heading">Iniciar Sesión</h2>
+        <form id="form-login" action="/api/auth/login" method="POST">
+          <div class="field">
+            <label for="login-email">Correo electrónico *</label>
+            <input type="email" id="login-email" name="email" autocomplete="email" autocorrect="off" autocapitalize="none" spellcheck="false" required>
+          </div>
+          <div class="field">
+            <label for="login-password">Contraseña *</label>
+            <input type="password" id="login-password" name="password" autocomplete="current-password" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Entrar a Hifa</button>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="register-heading">
+        <h2 id="register-heading">Crear Cuenta (Fase 1)</h2>
+        <form id="form-register" action="/api/auth/register" method="POST">
+          <div class="grid-2">
+            <div class="field">
+              <label for="reg-first-name">Nombre *</label>
+              <input type="text" id="reg-first-name" name="first_name" autocomplete="given-name" required>
+            </div>
+            <div class="field">
+              <label for="reg-last-name">Apellido *</label>
+              <input type="text" id="reg-last-name" name="last_name" autocomplete="family-name" required>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label for="reg-age">Edad *</label>
+              <input type="number" id="reg-age" name="age" min="14" max="120" required>
+            </div>
+            <div class="field">
+              <label for="reg-email">Correo *</label>
+              <input type="email" id="reg-email" name="email" autocomplete="email" autocorrect="off" autocapitalize="none" spellcheck="false" required>
+            </div>
+          </div>
+          <div class="field">
+            <label for="reg-password">Contraseña *</label>
+            <input type="password" id="reg-password" name="password" autocomplete="new-password" minlength="4" required>
+          </div>
+          <div class="field">
+            <label for="reg-avatar-file">Foto de perfil (opcional, usa avatar por defecto si no se sube)</label>
+            <input type="file" id="reg-avatar-file" accept="image/*">
+          </div>
+          <button type="submit" class="btn btn-primary">Registrarme</button>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <!-- Authenticated App Shell -->
+  <div id="app-shell" class="layout-shell" hidden>
+    <nav class="side-nav" aria-label="Navegación principal">
+      <ul id="nav-list">
+        <li><button type="button" class="nav-btn" data-tab="couple" aria-current="page">💑 Pareja y Gustos</button></li>
+        <li><button type="button" class="nav-btn" data-tab="economy">💰 Economía y Billeteras</button></li>
+        <li><button type="button" class="nav-btn" data-tab="tasks">✅ Tableros de Tareas</button></li>
+        <li><button type="button" class="nav-btn" data-tab="lists">🛒 Listas y Compras</button></li>
+        <li><button type="button" class="nav-btn" data-tab="calendar">📅 Calendario y Agenda</button></li>
+        <li><button type="button" class="nav-btn" data-tab="notitas">🎨 Notitas y Notas</button></li>
+        <li><button type="button" class="nav-btn" data-tab="daily">🔥 Pregunta del Día</button></li>
+        <li><button type="button" class="nav-btn" data-tab="cravings">🎁 Antojos</button></li>
+        <li><button type="button" class="nav-btn" data-tab="goals">🎯 Metas y Proyectos</button></li>
+        <li><button type="button" class="nav-btn" data-tab="capsules">⏳ Cápsula del Tiempo</button></li>
+        <li><button type="button" class="nav-btn" data-tab="notebooks">📓 Cuadernos Markdown</button></li>
+        <li><button type="button" class="nav-btn" data-tab="tools">🎡 Ruleta, Planes IA y Ciclo</button></li>
+        <li><button type="button" class="nav-btn" data-tab="settings">⚙️ Configuración</button></li>
+      </ul>
+    </nav>
+
+    <main id="tab-content" class="main-area"></main>
+  </div>
+
+  <!-- Native Modal Dialog: First-Time Setup / SpiderWebAPI Configuration -->
+  <dialog id="dialog-setup" aria-labelledby="setup-dialog-title">
+    <h2 id="setup-dialog-title">Configuración del Sistema (Local / SpiderWebAPI)</h2>
+    <p class="text-muted">Pensado para self-hosting local por defecto, con soporte directo para SpiderWebAPI (SQL, Cloud Storage y SpiderIA).</p>
+    <form id="form-setup" method="dialog">
+      <div class="grid-2">
+        <div class="field">
+          <label for="setup-db-mode">Modo Base de Datos</label>
+          <select id="setup-db-mode" name="db_mode">
+            <option value="local">Local (SQLite embebido)</option>
+            <option value="spiderweb">Remoto (SpiderWebAPI SQL)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="setup-storage-mode">Modo Cloud Storage</label>
+          <select id="setup-storage-mode" name="storage_mode">
+            <option value="local">Local (./data/uploads)</option>
+            <option value="spiderweb">Remoto (SpiderWebAPI Storage)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="setup-dbname">spiderwebdbname</label>
+        <input type="text" id="setup-dbname" name="spiderwebdbname" autocorrect="off" autocapitalize="none" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="setup-apikey">spiderapikey (X-API-KEY)</label>
+        <input type="text" id="setup-apikey" name="spiderapikey" autocorrect="off" autocapitalize="none" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="setup-storageid">spidercloudstrogaeid (Project ID)</label>
+        <input type="text" id="setup-storageid" name="spidercloudstrogaeid" inputmode="numeric">
+      </div>
+      <div id="spider-test-output" class="text-muted" style="margin-block-end:0.75rem;"></div>
+      <div style="display:flex; gap:0.6rem; justify-content:flex-end; flex-wrap:wrap;">
+        <button type="button" id="btn-test-spider" class="btn">Probar Conexión SpiderWebAPI</button>
+        <button type="button" id="btn-close-setup" class="btn">Cerrar</button>
+        <button type="submit" id="btn-save-setup" class="btn btn-primary">Guardar Configuración</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Native Modal Dialog: Notifications -->
+  <dialog id="dialog-notifications" aria-labelledby="notif-dialog-title">
+    <h2 id="notif-dialog-title">🔔 Notificaciones de Pareja</h2>
+    <div id="notifications-list" style="max-block-size:340px; overflow:auto; margin-block-end:1rem;"></div>
+    <form method="dialog" style="display:flex; justify-content:flex-end; gap:0.5rem;">
+      <button type="button" id="btn-mark-read" class="btn">Marcar leídas</button>
+      <button value="close" class="btn btn-primary" autofocus>Cerrar</button>
+    </form>
+  </dialog>
+
+  <footer style="text-align:center; padding:1rem; font-size:0.85rem; color:var(--muted);">
+    Hifa SaaS para Parejas — API REST lista para Web y App Móvil (`/api/v1/*`)
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
+
