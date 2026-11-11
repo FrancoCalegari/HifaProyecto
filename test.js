@@ -74,23 +74,22 @@ async function runTests() {
           favorite_weather: 'Templado',
           favorite_plan: 'Ruta y mate',
           additional_tastes: 'Helado de dulce de leche'
-        },
-        partner_tastes: {
-          shirt_size: 'S',
-          pants_size: '36',
-          shoe_size: '37',
-          favorite_food: 'Sushi',
-          favorite_flowers: 'Tulipanes',
-          favorite_brands: 'Zara',
-          favorite_series_movies: 'Friends',
-          favorite_color: 'Lila',
-          favorite_weather: 'Soleado',
-          favorite_plan: 'Merienda en cafetería',
-          additional_tastes: 'Chocolate amargo'
         }
       },
       u1.token
     );
+    const lock = await fetch(`${baseUrl}/api/dashboard`, { headers: { Authorization: `Bearer ${u1.token}` } });
+    assert.equal(lock.status, 403);
+    const second = await req(
+      '/api/couple/profile',
+      'PUT',
+      { relationship_start: '2023-05-14', my_tastes: { favorite_food: 'Sushi', favorite_color: 'Lila' } },
+      u2.token
+    );
+    assert.equal(second.profiles_ready, true);
+    const dash = await req('/api/dashboard', 'GET', null, u1.token);
+    assert.ok(dash.days_together > 0);
+    assert.equal(dash.partner.tastes.favorite_food, 'Sushi');
 
     // 4. Fase 2: Economy (Wallets, Transactions, Wallet-specific & Global Analytics)
     const econ0 = await req('/api/economy', 'GET', null, u1.token);

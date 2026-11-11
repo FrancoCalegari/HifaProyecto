@@ -268,6 +268,9 @@ function initDb(customDataDir) {
     );
   `);
 
+  // Migración para bases ya existentes
+  try { db.exec('ALTER TABLE users ADD COLUMN profile_completed INTEGER DEFAULT 0'); } catch (_) {}
+
   // Seed default system_config from .env if not yet populated
   const setCfgDefault = db.prepare('INSERT OR IGNORE INTO system_config (key, value) VALUES (?, ?)');
   setCfgDefault.run('db_mode', process.env.DB_MODE || 'local');

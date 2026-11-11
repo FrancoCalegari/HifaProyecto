@@ -13,20 +13,33 @@
       <h1>💞 Hifa Parejas</h1>
       <span id="couple-badge" class="couple-pill" hidden></span>
     </div>
-    <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
-      <button type="button" id="btn-open-setup" class="btn btn-sm">⚙️ Motor / SpiderWebAPI</button>
+    <div class="header-actions">
+      <button type="button" id="btn-open-setup" class="btn btn-sm">⚙️ <span class="hide-sm">Motor / SpiderWebAPI</span></button>
       <button type="button" id="btn-open-notifications" class="btn btn-sm" hidden>
-        🔔 Notificaciones <span id="notif-count" class="badge">0</span>
+        🔔 <span class="hide-sm">Notificaciones</span> <span id="notif-count" class="badge badge-brand">0</span>
       </button>
       <button type="button" id="btn-logout" class="btn btn-sm btn-danger" hidden>Salir</button>
     </div>
   </header>
 
-  <div id="status-banner" role="status" aria-live="polite" style="padding:0 1.5rem;"></div>
+  <div id="status-banner" class="status-banner" role="status" aria-live="polite"></div>
 
   <!-- Auth View (Before Login) -->
-  <main id="auth-view" class="main-area" hidden>
-    <div class="grid-2">
+  <main id="auth-view" class="main-area auth-view" hidden>
+    <section class="hero" aria-labelledby="hero-title">
+      <p class="hero-eyebrow">Self-hosted · Privado · Para dos</p>
+      <h2 id="hero-title">Organicen su vida en pareja, <span class="hero-accent">juntos</span>.</h2>
+      <p class="hero-lead">Gustos, economía compartida, tareas, calendario, notitas, metas y mucho más en un solo lugar que vive en tu propio servidor.</p>
+      <ul class="hero-features" aria-label="Características">
+        <li>💰 Economía</li>
+        <li>✅ Tareas</li>
+        <li>📅 Calendario</li>
+        <li>🔥 Pregunta del día</li>
+        <li>⏳ Cápsula del tiempo</li>
+        <li>🎯 Metas</li>
+      </ul>
+    </section>
+    <div class="grid-2 auth-grid">
       <section class="card" aria-labelledby="login-heading">
         <h2 id="login-heading">Iniciar Sesión</h2>
         <form id="form-login" action="/api/auth/login" method="POST">
@@ -83,19 +96,20 @@
   <div id="app-shell" class="layout-shell" hidden>
     <nav class="side-nav" aria-label="Navegación principal">
       <ul id="nav-list">
-        <li><button type="button" class="nav-btn" data-tab="couple" aria-current="page">💑 Pareja y Gustos</button></li>
-        <li><button type="button" class="nav-btn" data-tab="economy">💰 Economía y Billeteras</button></li>
-        <li><button type="button" class="nav-btn" data-tab="tasks">✅ Tableros de Tareas</button></li>
-        <li><button type="button" class="nav-btn" data-tab="lists">🛒 Listas y Compras</button></li>
-        <li><button type="button" class="nav-btn" data-tab="calendar">📅 Calendario y Agenda</button></li>
-        <li><button type="button" class="nav-btn" data-tab="notitas">🎨 Notitas y Notas</button></li>
-        <li><button type="button" class="nav-btn" data-tab="daily">🔥 Pregunta del Día</button></li>
-        <li><button type="button" class="nav-btn" data-tab="cravings">🎁 Antojos</button></li>
-        <li><button type="button" class="nav-btn" data-tab="goals">🎯 Metas y Proyectos</button></li>
-        <li><button type="button" class="nav-btn" data-tab="capsules">⏳ Cápsula del Tiempo</button></li>
-        <li><button type="button" class="nav-btn" data-tab="notebooks">📓 Cuadernos Markdown</button></li>
-        <li><button type="button" class="nav-btn" data-tab="tools">🎡 Ruleta, Planes IA y Ciclo</button></li>
-        <li><button type="button" class="nav-btn" data-tab="settings">⚙️ Configuración</button></li>
+        <li><button type="button" class="nav-btn" data-tab="dashboard" hidden><span class="nav-ico" aria-hidden="true">🏠</span><span class="nav-label">Dashboard</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="couple" aria-current="page"><span class="nav-ico" aria-hidden="true">💑</span><span class="nav-label">Pareja y Gustos</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="economy"><span class="nav-ico" aria-hidden="true">💰</span><span class="nav-label">Economía y Billeteras</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="tasks"><span class="nav-ico" aria-hidden="true">✅</span><span class="nav-label">Tableros de Tareas</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="lists"><span class="nav-ico" aria-hidden="true">🛒</span><span class="nav-label">Listas y Compras</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="calendar"><span class="nav-ico" aria-hidden="true">📅</span><span class="nav-label">Calendario y Agenda</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="notitas"><span class="nav-ico" aria-hidden="true">🎨</span><span class="nav-label">Notitas y Notas</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="daily"><span class="nav-ico" aria-hidden="true">🔥</span><span class="nav-label">Pregunta del Día</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="cravings"><span class="nav-ico" aria-hidden="true">🎁</span><span class="nav-label">Antojos</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="goals"><span class="nav-ico" aria-hidden="true">🎯</span><span class="nav-label">Metas y Proyectos</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="capsules"><span class="nav-ico" aria-hidden="true">⏳</span><span class="nav-label">Cápsula del Tiempo</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="notebooks"><span class="nav-ico" aria-hidden="true">📓</span><span class="nav-label">Cuadernos Markdown</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="tools"><span class="nav-ico" aria-hidden="true">🎡</span><span class="nav-label">Ruleta, Planes IA y Ciclo</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="settings"><span class="nav-ico" aria-hidden="true">⚙️</span><span class="nav-label">Configuración</span></button></li>
       </ul>
     </nav>
 
@@ -154,8 +168,8 @@
     </form>
   </dialog>
 
-  <footer style="text-align:center; padding:1rem; font-size:0.85rem; color:var(--muted);">
-    Hifa SaaS para Parejas — API REST lista para Web y App Móvil (`/api/v1/*`)
+  <footer class="app-footer">
+    Hifa · SaaS para Parejas — API REST lista para Web y App Móvil (<code>/api/v1/*</code>)
   </footer>
 
   <script src="/app.js"></script>
