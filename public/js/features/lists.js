@@ -41,13 +41,20 @@ async function renderListsTab(container) {
                     ${l.items
                       .map(
                         item => `<li class="stat-box" style="padding:0.6rem 0.8rem; display:flex; justify-content:space-between; align-items:center;">
-                          <label style="display:flex; align-items:center; gap:0.6rem; cursor:pointer; font-weight:400;">
+                          <label style="display:flex; align-items:center; gap:0.6rem; cursor:pointer; font-weight:400; flex:1;">
                             <input type="checkbox" data-action="toggle-list-item" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
                             <span style="${item.checked ? 'text-decoration:line-through; opacity:0.6;' : ''}">
                               <strong>${escapeHtml(item.name)}</strong> (${escapeHtml(item.quantity)}) — ${formatMoney(item.price)}
                             </span>
                           </label>
-                          <button type="button" class="btn btn-sm btn-danger" data-action="delete-list-item" data-id="${item.id}">✕</button>
+                          <div style="display:flex; gap:0.35rem; align-items:center;">
+                            <button type="button" class="btn btn-sm" data-action="edit-list-item" data-item='${escapeHtml(JSON.stringify(item))}' aria-label="Editar ${escapeHtml(item.name)}">
+                              ✏️
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" data-action="delete-list-item" data-id="${item.id}" aria-label="Eliminar ${escapeHtml(item.name)}">
+                              ✕
+                            </button>
+                          </div>
                         </li>`
                       )
                       .join('')}
@@ -57,7 +64,38 @@ async function renderListsTab(container) {
         )
         .join('')}
     </div>
+
+    <!-- Diálogo nativo: Editar Ítem de Lista -->
+    <dialog id="dialog-edit-item" aria-labelledby="dialog-edit-item-title">
+      <h2 id="dialog-edit-item-title">✏️ Editar Ítem de la Lista</h2>
+      <p class="text-muted">Modifica el nombre, precio estimado o cantidad del producto.</p>
+      <form id="form-edit-list-item">
+        <input type="hidden" id="edit-item-id" name="id">
+        <div class="field">
+          <label for="edit-item-name">Nombre del producto / ítem *</label>
+          <input type="text" id="edit-item-name" name="name" required>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="edit-item-price">Precio estimado</label>
+            <input type="number" id="edit-item-price" name="price" step="0.01" min="0">
+          </div>
+          <div class="field">
+            <label for="edit-item-qty">Cantidad</label>
+            <input type="text" id="edit-item-qty" name="quantity">
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem;">
+          <button type="button" class="btn" data-action="close-edit-item-dialog" id="btn-close-edit-item">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </dialog>
   `;
+
+  document.getElementById('btn-close-edit-item')?.addEventListener('click', () => {
+    document.getElementById('dialog-edit-item')?.close();
+  });
 }
 
 export default {
@@ -72,9 +110,25 @@ export default {
       await api(`/api/list-items/${el.dataset.id}`, { method: 'PATCH', body: { checked: el.checked } });
       ctx.refresh();
     },
+    'edit-list-item': (ctx, el) => {
+      const item = JSON.parse(el.dataset.item || '{}');
+      const dialog = document.getElementById('dialog-edit-item');
+      if (!dialog) return;
+      document.getElementById('edit-item-id').value = item.id || '';
+      document.getElementById('edit-item-name').value = item.name || '';
+      document.getElementById('edit-item-price').value = item.price !== undefined ? item.price : 0;
+      document.getElementById('edit-item-qty').value = item.quantity || '1';
+      dialog.showModal();
+    },
     'delete-list-item': async (ctx, el) => {
       await api(`/api/list-items/${el.dataset.id}`, { method: 'DELETE' });
       ctx.refresh();
+    },
+    'close-edit-item-dialog': () => {
+      const dialog = document.getElementById('dialog-edit-item');
+      if (dialog && typeof dialog.close === 'function') {
+        try { dialog.close(); } catch (_) {}
+      }
     }
   },
   forms: {
@@ -82,10 +136,26 @@ export default {
       await api('/api/lists', { method: 'POST', body: data });
       ctx.refresh();
     },
-    // se identifica por clase (hay un form por lista)
     'form-add-list-item': async (ctx, data, form) => {
       await api(`/api/lists/${form.dataset.listId}/items`, { method: 'POST', body: data });
       ctx.refresh();
+    },
+    'form-edit-list-item': async (ctx, data) => {
+      const id = data.id;
+      const dialog = document.getElementById('dialog-edit-item');
+      await api(`/api/list-items/${id}`, {
+        method: 'PUT',
+        body: {
+          name: data.name,
+          price: Number(data.price || 0),
+          quantity: data.quantity
+        }
+      });
+      if (dialog && typeof dialog.close === 'function') {
+        try { dialog.close(); } catch (_) {}
+      }
+      ctx.showStatus('Ítem actualizado.');
+      await ctx.refresh();
     }
   }
 };

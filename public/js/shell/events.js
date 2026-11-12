@@ -8,11 +8,8 @@ export function initEvents(ctx) {
     ctx.goto(btn.dataset.tab);
   });
 
-  const container = document.getElementById('tab-content');
-  if (!container) return;
-
-  // Clicks delegados en el contenido activo
-  container.addEventListener('click', async e => {
+  // Clicks delegados a nivel de documento (captura modales nativos en Top Layer y contenido activo)
+  document.addEventListener('click', async e => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const action = btn.dataset.action;
@@ -37,10 +34,13 @@ export function initEvents(ctx) {
     }
   });
 
-  // Submits delegados en formularios dentro de #tab-content
-  container.addEventListener('submit', async e => {
+  // Submits delegados en formularios (document-level para capturar modales nativos)
+  document.addEventListener('submit', async e => {
+    const form = e.target.closest('form') || e.target;
+    if (!form || !form.id) return;
+    if (form.id === 'form-login' || form.id === 'form-register' || form.id === 'form-setup') return;
+
     e.preventDefault();
-    const form = e.target;
     const fd = new FormData(form);
     const data = Object.fromEntries(fd.entries());
     const feature = getCurrentFeature();
@@ -58,13 +58,21 @@ export function initEvents(ctx) {
           }
         }
       }
+
+      // Fallback: buscar en todas las features registradas si no coincidió en currentFeature
+      for (const f of ctx.features || []) {
+        if (f?.forms?.[form.id]) {
+          return await f.forms[form.id](ctx, data, form);
+        }
+      }
     } catch (err) {
+      console.error('Error al procesar formulario:', err);
       ctx.showStatus(err.message, true);
     }
   });
 
-  // Changes delegados (para checkboxes de markdown, etc.)
-  container.addEventListener('change', async e => {
+  // Changes delegados a nivel de documento (para checkboxes de markdown, listas, etc.)
+  document.addEventListener('change', async e => {
     const feature = getCurrentFeature();
     if (!feature?.changes) return;
 

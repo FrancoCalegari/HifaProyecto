@@ -97,6 +97,23 @@ function initDb(customDataDir) {
       created_at TEXT DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS recurring_services (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      couple_id INTEGER NOT NULL,
+      wallet_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      category TEXT DEFAULT 'Suscripciones y Servicios',
+      amount REAL NOT NULL,
+      day_of_month INTEGER NOT NULL,
+      scope TEXT DEFAULT 'compartido',
+      mode TEXT DEFAULT 'debito_automatico',
+      description TEXT DEFAULT '',
+      active INTEGER DEFAULT 1,
+      last_processed_date TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS tasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       couple_id INTEGER NOT NULL,

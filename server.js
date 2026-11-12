@@ -123,7 +123,10 @@ function createApp(customDataDir) {
         filePath = path.join(publicDir, 'index.html');
       }
       const ext = path.extname(filePath).toLowerCase();
-      res.writeHead(200, { 'Content-Type': MIME_TYPES[ext] || 'text/plain; charset=utf-8' });
+      res.writeHead(200, {
+        'Content-Type': MIME_TYPES[ext] || 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      });
       fs.createReadStream(filePath).pipe(res);
     } catch (err) {
       sendJson(res, 500, { error: err.message || 'Error interno del servidor' });

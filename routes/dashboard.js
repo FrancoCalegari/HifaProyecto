@@ -1,13 +1,16 @@
 const { safeJson, getOffsetDate, computeMenstrualProjections } = require('../lib/helpers');
+const { processRecurringDebits } = require('../lib/economy');
 
 module.exports = async function handle(c) {
-  const { req, apiPath, db, user, partner, coupleId, send, ensureMonthlyRecoveryReset } = c;
+  const { req, apiPath, db, user, partner, coupleId, send, ensureMonthlyRecoveryReset, notifyPartner } = c;
 
   if (apiPath === '/api/dashboard' && req.method === 'GET') {
     const couple = ensureMonthlyRecoveryReset(db.prepare('SELECT * FROM couples WHERE id = ?').get(coupleId));
     if (!(user.profile_completed && partner?.profile_completed && couple.relationship_start)) {
       return send(403, { error: 'Ambos deben guardar el formulario para ver el dashboard.' });
     }
+    // Procesar cualquier débito automático mensual pendiente
+    processRecurringDebits(coupleId, db, notifyPartner);
     const today = new Date().toISOString().slice(0, 10);
     const nowIso = new Date().toISOString().slice(0, 16);
     const one = (sql, ...p) => db.prepare(sql).get(...p);

@@ -51,7 +51,8 @@ export const ctx = {
     renderActiveTab();
   },
   showStatus,
-  openSetup: openSetupDialog
+  openSetup: openSetupDialog,
+  features: featuresList
 };
 
 export function getFeature(id) {

@@ -146,6 +146,73 @@ async function runTests() {
     assert.equal(econ1.globalAnalytics.netBalance, 415000);
     assert.equal(econ1.globalAnalytics.byCategory.length, 2);
 
+    // 4b. Configurar tarjeta / medio de pago (Modificar datos)
+    const updateWalletRes = await req(
+      `/api/wallets/${walletId}`,
+      'PUT',
+      {
+        name: 'Cuenta Principal Actualizada',
+        type: 'billetera_virtual',
+        details: 'Alias hifa.mp / *1234',
+        initial_balance: 10000
+      },
+      u1.token
+    );
+    assert.equal(updateWalletRes.ok, true);
+    assert.equal(updateWalletRes.wallet.name, 'Cuenta Principal Actualizada');
+    assert.equal(updateWalletRes.wallet.details, 'Alias hifa.mp / *1234');
+
+    // 4c. Débitos automáticos mensuales por servicios (ej: Disney $7500)
+    const srvRes = await req(
+      '/api/recurring-services',
+      'POST',
+      {
+        wallet_id: walletId,
+        name: 'Disney+',
+        amount: 7500,
+        day_of_month: 1, // Día 1 (ya transcurrido en el mes actual)
+        category: 'Suscripciones y Servicios',
+        description: 'Plan Premium'
+      },
+      u1.token
+    );
+    assert.ok(srvRes.id);
+
+    // Al consultar la economía, el débito automático del día 1 debe haberse procesado y descontado
+    const econ2 = await req('/api/economy', 'GET', null, u1.token);
+    assert.ok(econ2.recurringServices.some(s => s.name === 'Disney+' && s.amount === 7500));
+    // El gasto total debe ser 85000 + 7500 = 92500
+    assert.equal(econ2.globalAnalytics.totalExpense, 92500);
+    assert.ok(econ2.transactions.some(t => t.description.includes('Disney+') && t.amount === 7500));
+
+    // Pausar y reanudar servicio
+    await req(`/api/recurring-services/${srvRes.id}`, 'PATCH', { active: 0 }, u1.token);
+    const srvListP = await req('/api/recurring-services', 'GET', null, u1.token);
+    assert.equal(srvListP.services.find(s => s.id === srvRes.id).active, 0);
+
+    await req(`/api/recurring-services/${srvRes.id}`, 'PATCH', { active: 1 }, u1.token);
+
+    // Actualizar servicio con PUT
+    const srvPutRes = await req(
+      `/api/recurring-services/${srvRes.id}`,
+      'PUT',
+      {
+        name: 'Disney+ y Star+',
+        amount: 8200,
+        day_of_month: 5,
+        category: 'Streaming',
+        description: 'Plan Combo+',
+        wallet_id: walletId,
+        active: 1
+      },
+      u1.token
+    );
+    assert.equal(srvPutRes.ok, true);
+    const srvListUpdated = await req('/api/recurring-services', 'GET', null, u1.token);
+    const updatedSrv = srvListUpdated.services.find(s => s.id === srvRes.id);
+    assert.equal(updatedSrv.name, 'Disney+ y Star+');
+    assert.equal(updatedSrv.amount, 8200);
+
     // 5. Tasks & Lists & Calendar
     const taskRes = await req(
       '/api/tasks',
@@ -158,6 +225,19 @@ async function runTests() {
     const listRes = await req('/api/lists', 'POST', { name: 'Ferretería' }, u1.token);
     const itemRes = await req(`/api/lists/${listRes.id}/items`, 'POST', { name: 'Lámpara LED', price: 3500, quantity: '2' }, u1.token);
     await req(`/api/list-items/${itemRes.id}`, 'PATCH', { checked: true }, u2.token);
+
+    // 5b. Editar ítem de lista (nombre, precio, cantidad)
+    await req(
+      `/api/list-items/${itemRes.id}`,
+      'PUT',
+      { name: 'Lámpara LED Cálida 12W', price: 4200, quantity: '3' },
+      u1.token
+    );
+    const updatedLists = await req('/api/lists', 'GET', null, u1.token);
+    const editedItem = updatedLists.lists.find(l => l.id === listRes.id).items.find(i => i.id === itemRes.id);
+    assert.equal(editedItem.name, 'Lámpara LED Cálida 12W');
+    assert.equal(editedItem.price, 4200);
+    assert.equal(editedItem.quantity, '3');
 
     await req(
       '/api/calendar',

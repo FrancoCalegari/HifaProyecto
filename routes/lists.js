@@ -37,10 +37,25 @@ module.exports = async function handle(c) {
     return send(200, { ok: true });
   }
 
-  if (apiPath.startsWith('/api/list-items/') && req.method === 'PATCH') {
+  if (apiPath.startsWith('/api/list-items/') && (req.method === 'PUT' || req.method === 'PATCH')) {
     const id = Number(apiPath.split('/').pop());
     const body = await c.body();
-    db.prepare('UPDATE list_items SET checked = ? WHERE id = ? AND couple_id = ?').run(body.checked ? 1 : 0, id, coupleId);
+    const existing = db.prepare('SELECT * FROM list_items WHERE id = ? AND couple_id = ?').get(id, coupleId);
+    if (!existing) return send(404, { error: 'Ítem no encontrado' });
+
+    const name = body.name ? body.name.trim() : existing.name;
+    const price = body.price !== undefined ? Number(body.price || 0) : existing.price;
+    const quantity = body.quantity !== undefined ? String(body.quantity || '1') : existing.quantity;
+    const checked = body.checked !== undefined ? (body.checked ? 1 : 0) : existing.checked;
+
+    db.prepare('UPDATE list_items SET name = ?, price = ?, quantity = ?, checked = ? WHERE id = ? AND couple_id = ?').run(
+      name,
+      price,
+      quantity,
+      checked,
+      id,
+      coupleId
+    );
     return send(200, { ok: true });
   }
 
