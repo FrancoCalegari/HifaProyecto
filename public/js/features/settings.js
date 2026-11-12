@@ -75,10 +75,19 @@ function renderSettingsTab(container) {
       </section>
 
       <section class="card">
-        <h2><i class="fa-solid fa-heart"></i> Configuración en Pareja y Motor Cloud/Local</h2>
-        <p class="text-muted">Estado de vinculación: <strong>${state.partner ? `Vinculado con ${escapeHtml(state.partner.first_name)} ${escapeHtml(state.partner.last_name)}` : 'Pendiente de vincular'}</strong></p>
-        <p class="text-muted">Motor DB activo: <strong>${escapeHtml(state.config.db_mode || 'local')}</strong> · Cloud Storage: <strong>${escapeHtml(state.config.storage_mode || 'local')}</strong></p>
-        <button type="button" class="btn btn-primary" data-action="open-setup-dialog"><i class="fa-solid fa-gear"></i> Configurar Proveedor Base de Datos / SpiderWebAPI</button>
+        ${
+          state.user.role === 'admin'
+            ? `<h2><i class="fa-solid fa-crown" style="color:#f59e0b;"></i> Configuración del SaaS y Motor Cloud</h2>
+               <p class="text-muted">Estado de vinculación: <strong>${state.partner ? `Vinculado con ${escapeHtml(state.partner.first_name)} ${escapeHtml(state.partner.last_name)}` : 'Pendiente de vincular'}</strong></p>
+               <p class="text-muted">Motor DB activo: <strong>${escapeHtml(state.config.db_mode || 'local')}</strong> · Cloud Storage: <strong>${escapeHtml(state.config.storage_mode || 'local')}</strong></p>
+               <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.75rem;">
+                 <button type="button" class="btn btn-primary" data-action="open-setup-dialog"><i class="fa-solid fa-gear"></i> Configuración SpiderWebAPI</button>
+                 <button type="button" class="btn" onclick="window.location.pathname='/admin'"><i class="fa-solid fa-crown" style="color:#f59e0b;"></i> Panel de Admin</button>
+               </div>`
+            : `<h2><i class="fa-solid fa-heart"></i> Estado de tu Cuenta en Pareja</h2>
+               <p class="text-muted">Estado de vinculación: <strong>${state.partner ? `Vinculado con ${escapeHtml(state.partner.first_name)} ${escapeHtml(state.partner.last_name)}` : 'Pendiente de vincular'}</strong></p>
+               <p class="text-muted"><i class="fa-solid fa-cloud" style="color:var(--brand);"></i> Servicio Hifa Cloud activo · Tu información y la de tu pareja se encuentran protegidas y sincronizadas automáticamente.</p>`
+        }
       </section>
     </div>
   `;

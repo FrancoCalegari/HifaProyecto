@@ -70,7 +70,7 @@ function createApp(customDataDir) {
   const { db, uploadsDir } = ctx;
   const { notifyPartner, getPartner, ensureMonthlyRecoveryReset } = createCoupleHelpers(db);
 
-  const server = http.createServer(async (req, res) => {
+  const handler = async (req, res) => {
     try {
       if (req.method === 'OPTIONS') {
         res.writeHead(204, {
@@ -83,6 +83,16 @@ function createApp(customDataDir) {
 
       const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
       const pathname = urlObj.pathname;
+
+      // Detectar operaciones de mutación para sincronizar con la nube si aplica
+      const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
+      if (isMutation && ctx.scheduleDbSync) {
+        res.on('finish', () => {
+          if (res.statusCode >= 200 && res.statusCode < 400) {
+            ctx.scheduleDbSync(process.env.VERCEL ? 300 : 2500);
+          }
+        });
+      }
 
       // Serve uploaded files
       if (pathname.startsWith('/uploads/') && req.method === 'GET') {
@@ -137,9 +147,11 @@ function createApp(customDataDir) {
     } catch (err) {
       sendJson(res, 500, { error: err.message || 'Error interno del servidor' });
     }
-  });
+  };
 
-  return { server, ctx };
+  const server = http.createServer(handler);
+
+  return { server, handler, ctx };
 }
 
 if (require.main === module) {

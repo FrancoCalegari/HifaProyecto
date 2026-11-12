@@ -26,7 +26,12 @@ module.exports = async function handle(c) {
       config,
       stats,
       users,
-      couples
+      couples,
+      cloudSync: {
+        lastSync: ctx.getLastSyncTime?.(),
+        isVercel: process.env.VERCEL === '1',
+        dataDir: ctx.dataDir
+      }
     });
   }
 
@@ -78,6 +83,15 @@ module.exports = async function handle(c) {
 
     db.prepare('UPDATE users SET role = ? WHERE id = ?').run(newRole, targetUserId);
     return send(200, { ok: true, targetUserId, newRole });
+  }
+
+  // 5. Forzar sincronización de base de datos a la nube
+  if (apiPath === '/api/admin/cloud-sync' && req.method === 'POST') {
+    if (typeof ctx.syncDbToCloud === 'function') {
+      const result = await ctx.syncDbToCloud();
+      return send(200, { ok: result.ok, result, lastSync: ctx.getLastSyncTime?.() });
+    }
+    return send(400, { error: 'Sincronizador en la nube no disponible.' });
   }
 
   return send(404, { error: 'Endpoint de administración no encontrado' });

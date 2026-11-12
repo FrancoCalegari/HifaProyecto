@@ -138,7 +138,7 @@ function renderAdminLoginForm(container, customMsg = '') {
 }
 
 function renderAdminDashboard(container, data) {
-  const { config, stats, users } = data;
+  const { config, stats, users, cloudSync } = data;
 
   container.innerHTML = `
     <div style="display:flex; flex-direction:column; gap:1.25rem; max-width:1100px; margin: 1rem auto; padding: 0 1rem;">
@@ -158,6 +158,30 @@ function renderAdminDashboard(container, data) {
             <button type="button" class="btn btn-sm btn-danger" id="btn-admin-logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Salir</button>
           </div>
         </div>
+      </section>
+
+      <!-- Estado de Producción y Nube -->
+      <section class="card" style="border-left: 4px solid #3b82f6;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h3 style="margin:0; display:flex; align-items:center; gap:0.5rem;">
+              <i class="fa-solid fa-cloud"></i> Entorno de Ejecución & Sincronización en la Nube
+            </h3>
+            <p class="text-muted" style="margin:0.25rem 0 0 0;">
+              Plataforma: <strong>${cloudSync?.isVercel ? 'Vercel Serverless Production' : 'Servidor Node.js / Docker'}</strong> ·
+              Directorio de datos: <code>${escapeHtml(cloudSync?.dataDir || './data')}</code>
+            </p>
+            <p class="text-muted" style="margin:0.25rem 0 0 0;">
+              Última sincronización a Cloud Storage: <strong>${cloudSync?.lastSync ? escapeHtml(cloudSync.lastSync.replace('T', ' ').slice(0, 19)) : 'Automática al modificar datos'}</strong>
+            </p>
+          </div>
+          <div>
+            <button type="button" class="btn btn-sm btn-primary" id="btn-admin-sync-cloud">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Sincronizar Base de Datos Ahora
+            </button>
+          </div>
+        </div>
+        <div id="admin-cloud-sync-status" style="margin-top:0.5rem; font-size:0.85rem;"></div>
       </section>
 
       <!-- Métricas globales del SaaS -->
@@ -353,6 +377,27 @@ function renderAdminDashboard(container, data) {
       await renderAdminView();
     } catch (err) {
       showStatus(err.message, true);
+    }
+  });
+
+  // Forzar sincronización de base de datos a la nube
+  document.getElementById('btn-admin-sync-cloud')?.addEventListener('click', async () => {
+    const statusEl = document.getElementById('admin-cloud-sync-status');
+    const btn = document.getElementById('btn-admin-sync-cloud');
+    if (btn) btn.disabled = true;
+    if (statusEl) statusEl.innerHTML = '<span class="text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Sincronizando base de datos a SpiderWebAPI Cloud Storage...</span>';
+    try {
+      const res = await api('/api/admin/cloud-sync', { method: 'POST', body: {} });
+      if (res.ok) {
+        if (statusEl) statusEl.innerHTML = `<span class="text-ok"><i class="fa-solid fa-circle-check"></i> Sincronización exitosa (${res.result?.size || 0} bytes guardados en la nube).</span>`;
+        showStatus('Base de datos sincronizada con SpiderWebAPI Storage.');
+      } else {
+        if (statusEl) statusEl.innerHTML = `<span class="text-danger"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${escapeHtml(res.result?.error || 'No se pudo sincronizar')}</span>`;
+      }
+    } catch (err) {
+      if (statusEl) statusEl.innerHTML = `<span class="text-danger"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHtml(err.message)}</span>`;
+    } finally {
+      if (btn) btn.disabled = false;
     }
   });
 

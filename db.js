@@ -2,6 +2,7 @@ const { DatabaseSync } = require('node:sqlite');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const { restoreDbFromCloud, syncDbToCloud, scheduleDbSync, getLastSyncTime } = require('./lib/cloud-sync');
 
 // Load .env if present
 const envPath = path.join(__dirname, '.env');
@@ -18,7 +19,10 @@ if (fs.existsSync(envPath)) {
 }
 
 function initDb(customDataDir) {
-  const dataDir = customDataDir || process.env.DATA_DIR || path.join(__dirname, 'data');
+  const defaultDataDir = process.env.VERCEL
+    ? path.join('/tmp', 'hifa-data')
+    : path.join(__dirname, 'data');
+  const dataDir = customDataDir || process.env.DATA_DIR || defaultDataDir;
   const uploadsDir = path.join(dataDir, 'uploads');
   fs.mkdirSync(uploadsDir, { recursive: true });
 
@@ -309,7 +313,8 @@ function initDb(customDataDir) {
   try {
     const adminUser = db.prepare("SELECT id FROM users WHERE role = 'admin'").get();
     if (!adminUser) {
-      const adminEmail = 'admin@hifa.saas';
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin@hifa.saas';
+      const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
       const exists = db.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
       if (!exists) {
         const { hashPassword } = require('./lib/auth');
@@ -317,7 +322,7 @@ function initDb(customDataDir) {
         db.prepare(`
           INSERT INTO users (first_name, last_name, age, email, password_hash, avatar_url, pair_code, role, profile_completed)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
-        `).run('Admin', 'SaaS', 30, adminEmail, hashPassword('admin123'), defaultAvatarSvg('Admin SaaS'), 'HIFA-ADMIN', 'admin');
+        `).run('Admin', 'SaaS', 30, adminEmail, hashPassword(adminPass), defaultAvatarSvg('Admin SaaS'), 'HIFA-ADMIN', 'admin');
       } else {
         db.prepare("UPDATE users SET role = 'admin' WHERE id = ?").run(exists.id);
       }
@@ -430,8 +435,9 @@ function initDb(customDataDir) {
           body: form
         });
         remoteResult = await resp.json();
-        if (remoteResult && remoteResult.file && remoteResult.file.id) {
-          fileUrl = `/api/storage/remote/${remoteResult.file.id}?fallback=${encodeURIComponent(fileUrl)}`;
+        const uploadFile = remoteResult.file || remoteResult.files?.[0];
+        if (uploadFile && uploadFile.id) {
+          fileUrl = `/api/storage/remote/${uploadFile.id}?fallback=${encodeURIComponent(fileUrl)}`;
         }
       } catch (err) {
         // Fallback to local URL if remote storage is unreachable
@@ -498,7 +504,7 @@ function initDb(customDataDir) {
     };
   }
 
-  return {
+  const ctx = {
     db,
     dataDir,
     uploadsDir,
@@ -507,8 +513,13 @@ function initDb(customDataDir) {
     spiderSqlQuery,
     spiderListDatabases,
     saveUploadFile,
-    generateAiPlans
+    generateAiPlans,
+    syncDbToCloud: () => syncDbToCloud(ctx),
+    scheduleDbSync: (delay) => scheduleDbSync(ctx, delay),
+    getLastSyncTime
   };
+
+  return ctx;
 }
 
 module.exports = { initDb };

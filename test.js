@@ -431,7 +431,15 @@ async function runTests() {
     const { roulettes: roulettesAfterDel } = await req('/api/roulettes', 'GET', null, u1.token);
     assert.equal(roulettesAfterDel.length, initialCount);
 
-    console.log('✓ Todos los tests de Fase 1, Fase 2, Herramientas y SpiderWebAPI pasaron correctamente.');
+    // 13. Vercel Serverless Entrypoint & Cloud Sync API
+    const vercelHandler = require('./api/index');
+    assert.equal(typeof vercelHandler, 'function', 'api/index.js must export an async handler function');
+
+    // Test cloud-sync admin endpoint
+    const adminSyncRes = await req('/api/admin/cloud-sync', 'POST', {}, adminLogin.token);
+    assert.ok(adminSyncRes.ok !== undefined, 'cloud-sync response should return status');
+
+    console.log('✓ Todos los tests de Fase 1, Fase 2, Herramientas, Vercel Serverless y SpiderWebAPI pasaron correctamente.');
   } finally {
     server.close();
     fs.rmSync(tmpDir, { recursive: true, force: true });
