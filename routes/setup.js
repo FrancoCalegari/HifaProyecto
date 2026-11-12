@@ -1,0 +1,63 @@
+module.exports = async function handle(c) {
+  const { req, res, apiPath, urlObj, ctx, send } = c;
+  const { getConfig, updateConfig, spiderSqlQuery, spiderListDatabases } = ctx;
+
+  if (apiPath === '/api/setup' && req.method === 'GET') {
+    const cfg = getConfig();
+    return send(200, { config: cfg });
+  }
+
+  if (apiPath === '/api/setup' && req.method === 'POST') {
+    const body = await c.body();
+    const updated = updateConfig({
+      db_mode: body.db_mode || 'local',
+      storage_mode: body.storage_mode || 'local',
+      spiderwebdbname: body.spiderwebdbname,
+      spiderapikey: body.spiderapikey,
+      spidercloudstrogaeid: body.spidercloudstrogaeid,
+      spiderweb_api_url: body.spiderweb_api_url,
+      setup_completed: '1'
+    });
+    return send(200, { ok: true, config: updated });
+  }
+
+  if (apiPath === '/api/spiderweb/test' && req.method === 'POST') {
+    const body = await c.body();
+    if (body.spiderapikey) updateConfig(body);
+    try {
+      if (body.query) {
+        const data = await spiderSqlQuery(body.query);
+        return send(200, { ok: true, data });
+      }
+      const dbs = await spiderListDatabases();
+      return send(200, { ok: true, databases: dbs });
+    } catch (err) {
+      return send(200, { ok: false, error: err.message });
+    }
+  }
+
+  if (apiPath.startsWith('/api/storage/remote/') && req.method === 'GET') {
+    const fileId = apiPath.split('/').pop();
+    const cfg = getConfig();
+    try {
+      const resp = await fetch(`${cfg.spiderweb_api_url}/storage/files/${fileId}`, {
+        headers: { 'X-API-KEY': cfg.spiderapikey }
+      });
+      if (resp.ok) {
+        const buf = Buffer.from(await resp.arrayBuffer());
+        res.writeHead(200, { 'Content-Type': resp.headers.get('content-type') || 'application/octet-stream' });
+        res.end(buf);
+        return true;
+      }
+    } catch (_) {}
+    const fallback = urlObj.searchParams.get('fallback');
+    if (fallback) {
+      res.writeHead(302, { Location: fallback });
+      res.end();
+      return true;
+    }
+    return send(404, { error: 'Archivo remoto no encontrado' });
+  }
+
+  return false;
+};

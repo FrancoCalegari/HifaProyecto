@@ -26,6 +26,16 @@ async function runTests() {
   }
 
   try {
+    // -1. Smoke test: Verify static files and ES module entrypoint
+    const indexRes = await fetch(`${baseUrl}/`);
+    assert.equal(indexRes.status, 200);
+    const indexHtml = await indexRes.text();
+    assert.ok(indexHtml.includes('/js/main.js'), 'index.html must reference /js/main.js');
+
+    const mainJsRes = await fetch(`${baseUrl}/js/main.js`);
+    assert.equal(mainJsRes.status, 200);
+    assert.ok(mainJsRes.headers.get('content-type').includes('javascript'));
+
     // 0. Check First-Time Setup & SpiderWebAPI config
     const setup0 = await req('/api/setup');
     assert.equal(setup0.config.spidercloudstrogaeid, '47');
