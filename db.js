@@ -4,17 +4,22 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { restoreDbFromCloud, syncDbToCloud, scheduleDbSync, getLastSyncTime } = require('./lib/cloud-sync');
 
-// Load .env if present
-const envPath = path.join(__dirname, '.env');
-if (fs.existsSync(envPath)) {
-  for (const line of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const idx = trimmed.indexOf('=');
-    if (idx === -1) continue;
-    const key = trimmed.slice(0, idx).trim();
-    const val = trimmed.slice(idx + 1).trim().replace(/^["']|["']$/g, '');
-    if (!(key in process.env)) process.env[key] = val;
+// Load .env or .env.production if present
+const envFiles = [
+  path.join(__dirname, '.env.production'),
+  path.join(__dirname, '.env')
+];
+for (const envPath of envFiles) {
+  if (fs.existsSync(envPath)) {
+    for (const line of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const idx = trimmed.indexOf('=');
+      if (idx === -1) continue;
+      const key = trimmed.slice(0, idx).trim();
+      const val = trimmed.slice(idx + 1).trim().replace(/^["']|["']$/g, '');
+      if (!(key in process.env)) process.env[key] = val;
+    }
   }
 }
 
