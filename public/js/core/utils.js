@@ -22,7 +22,7 @@ export function showStatus(msg, isError = false) {
   const banner = document.getElementById('status-banner');
   if (!banner) return;
   banner.innerHTML = `<div class="card" style="margin-block:0.75rem; padding:0.75rem 1rem; border-color:${isError ? 'var(--danger)' : 'var(--ok)'};">
-    <strong class="${isError ? 'text-danger' : 'text-ok'}">${isError ? '⚠️ ' : '✓ '}${escapeHtml(msg)}</strong>
+    <strong class="${isError ? 'text-danger' : 'text-ok'}">${isError ? '<i class="fa-solid fa-triangle-exclamation"></i> ' : '<i class="fa-solid fa-circle-check"></i> '}${escapeHtml(msg)}</strong>
   </div>`;
   setTimeout(() => {
     if (banner.innerHTML.includes(escapeHtml(msg))) banner.innerHTML = '';

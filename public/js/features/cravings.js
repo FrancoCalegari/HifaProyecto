@@ -14,7 +14,7 @@ async function renderCravingsTab(container) {
     ${
       pendingForMe.length > 0
         ? `<section class="card" style="border-color:var(--brand); border-width:2px;">
-            <h2>💌 Sugerencias de Antojos de tu Pareja (${pendingForMe.length})</h2>
+            <h2><i class="fa-solid fa-envelope-open-text"></i> Sugerencias de Antojos de tu Pareja (${pendingForMe.length})</h2>
             <p class="text-muted">Si aceptas un antojo sugerido, se añade automáticamente a tu lista de antojos.</p>
             <div class="grid-2">
               ${pendingForMe
@@ -24,8 +24,8 @@ async function renderCravingsTab(container) {
                     <p class="text-muted">Sugerido por ${escapeHtml(c.suggested_by_name || 'tu pareja')} ${c.price ? `· ${formatMoney(c.price)}` : ''}</p>
                     ${c.description ? `<p>${escapeHtml(c.description)}</p>` : ''}
                     <div style="display:flex; gap:0.5rem;">
-                      <button type="button" class="btn btn-sm btn-primary" data-action="respond-craving" data-id="${c.id}" data-accept="1">✓ Aceptar Antojo</button>
-                      <button type="button" class="btn btn-sm btn-danger" data-action="respond-craving" data-id="${c.id}" data-accept="0">✕ Rechazar</button>
+                      <button type="button" class="btn btn-sm btn-primary" data-action="respond-craving" data-id="${c.id}" data-accept="1"><i class="fa-solid fa-check"></i> Aceptar Antojo</button>
+                      <button type="button" class="btn btn-sm btn-danger" data-action="respond-craving" data-id="${c.id}" data-accept="0"><i class="fa-solid fa-xmark"></i> Rechazar</button>
                     </div>
                   </div>`
                 )
@@ -36,7 +36,7 @@ async function renderCravingsTab(container) {
     }
 
     <section class="card">
-      <h2>🎁 Cargar Antojo o Sugerir Antojo a mi Pareja</h2>
+      <h2><i class="fa-solid fa-gift"></i> Cargar Antojo o Sugerir Antojo a mi Pareja</h2>
       <form id="form-new-craving">
         <div class="grid-2">
           <div class="field">
@@ -47,7 +47,7 @@ async function renderCravingsTab(container) {
             <label for="crav-mode">Destino del antojo</label>
             <select id="crav-mode" name="suggest_to_partner">
               <option value="">Añadir a MI lista de antojos</option>
-              <option value="1">💡 Sugerir este antojo a mi pareja (para que acepte o rechace)</option>
+              <option value="1">Sugerir este antojo a mi pareja (para que acepte o rechace)</option>
             </select>
           </div>
         </div>
@@ -75,11 +75,11 @@ async function renderCravingsTab(container) {
 
     <div class="grid-2">
       <section class="card">
-        <h3>✨ Antojos de ${escapeHtml(state.partner?.first_name || 'mi Pareja')} (${partnerActive.length})</h3>
+        <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Antojos de ${escapeHtml(state.partner?.first_name || 'mi Pareja')} (${partnerActive.length})</h3>
         ${renderCravingsList(partnerActive)}
       </section>
       <section class="card">
-        <h3>🍒 Mis Antojos (${myActive.length})</h3>
+        <h3><i class="fa-solid fa-heart"></i> Mis Antojos (${myActive.length})</h3>
         ${renderCravingsList(myActive)}
       </section>
     </div>
@@ -97,10 +97,10 @@ function renderCravingsList(list) {
               <strong>${escapeHtml(c.title)}</strong>
               ${c.price ? `<span class="badge">${formatMoney(c.price)}</span>` : ''}
             </div>
-            <button type="button" class="btn btn-sm btn-danger" data-action="delete-craving" data-id="${c.id}">✕</button>
+            <button type="button" class="btn btn-sm btn-danger" data-action="delete-craving" data-id="${c.id}" aria-label="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
           </div>
           ${c.description ? `<p style="margin:0.35rem 0;">${escapeHtml(c.description)}</p>` : ''}
-          ${c.url ? `<p style="margin:0.25rem 0;"><a href="${escapeHtml(c.url)}" target="_blank" rel="noopener">🔗 Ver link del producto</a></p>` : ''}
+          ${c.url ? `<p style="margin:0.25rem 0;"><a href="${escapeHtml(c.url)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver link del producto</a></p>` : ''}
           ${c.photo_url ? `<img src="${escapeHtml(c.photo_url)}" alt="${escapeHtml(c.title)}" loading="lazy" width="240" height="160" style="max-width:100%; height:auto; border-radius:0.5rem; margin-top:0.4rem;">` : ''}
         </div>`
       )

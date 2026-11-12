@@ -8,7 +8,7 @@ async function renderGoalsTab(container) {
 
   container.innerHTML = `
     <section class="card">
-      <h2>🎯 Metas y Proyectos en Pareja</h2>
+      <h2><i class="fa-solid fa-bullseye"></i> Metas y Proyectos en Pareja</h2>
       <p class="text-muted">Crea metas <strong>Monetarias</strong> (ej. ahorro para casa), de <strong>Progreso/Hábito</strong> (ej. rutina de gym diaria/semanal/mensual/anual) o de <strong>Tiempo</strong> (cuenta regresiva con días, horas, minutos y segundos).</p>
       <form id="form-new-goal">
         <div class="grid-3">
@@ -19,9 +19,9 @@ async function renderGoalsTab(container) {
           <div class="field">
             <label for="goal-type">Tipo de meta *</label>
             <select id="goal-type" name="goal_type" required>
-              <option value="monetary">💰 Monetaria (ej: 1.2M para casa)</option>
-              <option value="habit">🏋️ Progreso / Rutina (diaria, semanal, mensual, anual)</option>
-              <option value="time">⏱️ De Tiempo (Cuenta regresiva a fecha)</option>
+              <option value="monetary">Monetaria (ej: ahorro para casa)</option>
+              <option value="habit">Progreso / Rutina (diaria, semanal, mensual, anual)</option>
+              <option value="time">De Tiempo (Cuenta regresiva a fecha)</option>
             </select>
           </div>
           <div class="field">
@@ -65,12 +65,12 @@ async function renderGoalsTab(container) {
           return `<section class="card">
             <div style="display:flex; justify-content:space-between; align-items:start; gap:0.5rem;">
               <div>
-                <span class="badge">${g.goal_type === 'monetary' ? '💰 Monetaria' : g.goal_type === 'habit' ? `🏋️ Rutina (${escapeHtml(g.frequency)})` : '⏱️ Cuenta Regresiva'}</span>
-                ${g.finished ? '<span class="badge" style="background:var(--ok); color:#000;">✓ FINALIZADO</span>' : ''}
+                <span class="badge">${g.goal_type === 'monetary' ? '<i class="fa-solid fa-wallet"></i> Monetaria' : g.goal_type === 'habit' ? `<i class="fa-solid fa-dumbbell"></i> Rutina (${escapeHtml(g.frequency)})` : '<i class="fa-solid fa-stopwatch"></i> Cuenta Regresiva'}</span>
+                ${g.finished ? '<span class="badge" style="background:var(--ok); color:#000;"><i class="fa-solid fa-check"></i> FINALIZADO</span>' : ''}
                 <h3 style="margin:0.35rem 0;">${escapeHtml(g.title)}</h3>
                 <div class="text-muted">Creado por ${escapeHtml(g.creator_name || '')} · Inicio: ${escapeHtml(g.created_at.slice(0, 10))}</div>
               </div>
-              <button type="button" class="btn btn-sm btn-danger" data-action="delete-goal" data-id="${g.id}">✕</button>
+              <button type="button" class="btn btn-sm btn-danger" data-action="delete-goal" data-id="${g.id}" aria-label="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
             </div>
 
             ${g.description ? `<p>${escapeHtml(g.description)}</p>` : ''}
@@ -86,8 +86,8 @@ async function renderGoalsTab(container) {
                      !g.finished
                        ? `<div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
                             <input type="number" id="goal-add-${g.id}" placeholder="Monto a sumar" step="0.01" style="width:160px; min-height:38px;">
-                            <button type="button" class="btn btn-sm btn-primary" data-action="progress-goal" data-id="${g.id}">+ Sumar Aporte</button>
-                            <button type="button" class="btn btn-sm" data-action="finish-goal" data-id="${g.id}">🏁 Finalizado en el acto</button>
+                            <button type="button" class="btn btn-sm btn-primary" data-action="progress-goal" data-id="${g.id}"><i class="fa-solid fa-plus"></i> Sumar Aporte</button>
+                            <button type="button" class="btn btn-sm" data-action="finish-goal" data-id="${g.id}"><i class="fa-solid fa-flag-checkered"></i> Finalizado en el acto</button>
                           </div>`
                        : ''
                    }`
@@ -96,8 +96,8 @@ async function renderGoalsTab(container) {
                    ${
                      !g.finished
                        ? `<div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
-                            <button type="button" class="btn btn-sm btn-primary" data-action="progress-goal" data-id="${g.id}" data-delta="1">✓ Cumplí hoy (${escapeHtml(g.frequency)})</button>
-                            <button type="button" class="btn btn-sm" data-action="finish-goal" data-id="${g.id}">🏁 Finalizado en el acto</button>
+                            <button type="button" class="btn btn-sm btn-primary" data-action="progress-goal" data-id="${g.id}" data-delta="1"><i class="fa-solid fa-check"></i> Cumplí hoy (${escapeHtml(g.frequency)})</button>
+                            <button type="button" class="btn btn-sm" data-action="finish-goal" data-id="${g.id}"><i class="fa-solid fa-flag-checkered"></i> Finalizado en el acto</button>
                           </div>`
                        : ''
                    }`
@@ -107,7 +107,7 @@ async function renderGoalsTab(container) {
                    </div>
                    ${
                      !g.finished
-                       ? `<button type="button" class="btn btn-sm" data-action="finish-goal" data-id="${g.id}">🏁 Finalizado en el acto</button>`
+                       ? `<button type="button" class="btn btn-sm" data-action="finish-goal" data-id="${g.id}"><i class="fa-solid fa-flag-checkered"></i> Finalizado en el acto</button>`
                        : ''
                    }`
             }
@@ -120,7 +120,7 @@ async function renderGoalsTab(container) {
   const updateTickers = () => {
     document.querySelectorAll('[data-countdown-target]').forEach(el => {
       if (el.dataset.finished === '1') {
-        el.textContent = '🎉 ¡Proyecto Finalizado!';
+        el.innerHTML = '<i class="fa-solid fa-trophy" style="color:#f59e0b;"></i> ¡Proyecto Finalizado!';
         return;
       }
       const targetMs = new Date(el.dataset.countdownTarget).getTime();

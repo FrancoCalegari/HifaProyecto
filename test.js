@@ -31,6 +31,10 @@ async function runTests() {
     assert.equal(indexRes.status, 200);
     const indexHtml = await indexRes.text();
     assert.ok(indexHtml.includes('/js/main.js'), 'index.html must reference /js/main.js');
+    assert.ok(!indexHtml.includes('btn-open-notifications'), 'btn-open-notifications must be removed');
+
+    const adminHtmlRes = await fetch(`${baseUrl}/admin`);
+    assert.equal(adminHtmlRes.status, 200);
 
     const mainJsRes = await fetch(`${baseUrl}/js/main.js`);
     assert.equal(mainJsRes.status, 200);
@@ -39,6 +43,19 @@ async function runTests() {
     // 0. Check First-Time Setup & SpiderWebAPI config
     const setup0 = await req('/api/setup');
     assert.equal(setup0.config.spidercloudstrogaeid, '47');
+
+    // 0b. Admin Account & Role Check
+    const adminLogin = await req('/api/auth/login', 'POST', {
+      email: 'admin@hifa.saas',
+      password: 'admin123'
+    });
+    assert.ok(adminLogin.token);
+    assert.equal(adminLogin.user.role, 'admin');
+
+    const adminOverview = await req('/api/admin/overview', 'GET', null, adminLogin.token);
+    assert.ok(adminOverview.config);
+    assert.ok(adminOverview.stats);
+    assert.ok(Array.isArray(adminOverview.users));
 
     // 1. Fase 1: Register two users (with default avatar fallback)
     const u1 = await req('/api/auth/register', 'POST', {
@@ -49,8 +66,26 @@ async function runTests() {
       password: 'secret123'
     });
     assert.ok(u1.token);
+    assert.equal(u1.user.role, 'user');
     assert.ok(u1.user.avatar_url.startsWith('data:image/svg+xml'));
     assert.ok(u1.user.pair_code.startsWith('HIFA-'));
+
+    // Non-admin user cannot access admin overview (403 Forbidden)
+    const forbiddenRes = await fetch(`${baseUrl}/api/admin/overview`, {
+      headers: { Authorization: `Bearer ${u1.token}` }
+    });
+    assert.equal(forbiddenRes.status, 403);
+
+    // Admin updates db configuration
+    const updateRes = await req('/api/admin/setup', 'POST', {
+      db_mode: 'local',
+      storage_mode: 'local',
+      spiderwebdbname: 'sw_test_db',
+      spiderapikey: 'key123',
+      spidercloudstrogaeid: '99',
+      spiderweb_api_url: 'https://spiderwebargapi.com.ar/api/v1'
+    }, adminLogin.token);
+    assert.equal(updateRes.config.spiderwebdbname, 'sw_test_db');
 
     const u2 = await req('/api/auth/register', 'POST', {
       first_name: 'Sofía',
@@ -317,8 +352,84 @@ async function runTests() {
     const mens = await req('/api/menstrual', 'PUT', { lastStart: '2026-11-01', cycleDays: 28, periodDays: 5 }, u2.token);
     assert.equal(mens.menstrual.nextPeriodStart, '2026-11-29');
 
+    // 11b. Módulo dedicado de Ciclo Menstrual, Métodos Anticonceptivos y Algoritmo de 3 Meses
+    const cycleInit = await req('/api/cycle?month=2026-11', 'GET', null, u1.token);
+    assert.equal(cycleInit.month, '2026-11');
+    assert.equal(cycleInit.analysis.algorithmActive, false);
+    assert.ok(cycleInit.analysis.cyclesRecorded < 3);
+
+    // Configurar método anticonceptivo
+    const cycleCfg = await req('/api/cycle/settings', 'PUT', {
+      contraceptive_method: 'pastillas_28',
+      cycleDays: 29,
+      periodDays: 5,
+      lastStart: '2026-11-01'
+    }, u2.token);
+    assert.equal(cycleCfg.settings.contraceptive_method, 'pastillas_28');
+    assert.equal(cycleCfg.settings.cycleDays, 29);
+
+    // Registrar un día con anticonceptivo tomado, relaciones sexuales 🔥 y flujo ligero 💧
+    const logRes = await req('/api/cycle/log', 'POST', {
+      date: '2026-11-15',
+      contraceptive: 'tomado',
+      intimacy: 1,
+      flow: 'ligero',
+      is_period_start: 0,
+      notes: 'Pastilla tomada a las 21hs. Relaciones con protección.'
+    }, u1.token);
+    assert.equal(logRes.log.date, '2026-11-15');
+    assert.equal(logRes.log.contraceptive, 'tomado');
+    assert.equal(logRes.log.intimacy, 1);
+    assert.equal(logRes.log.flow, 'ligero');
+
+    // Verificar en GET /api/cycle
+    const cycleWithLog = await req('/api/cycle?month=2026-11', 'GET', null, u2.token);
+    assert.equal(cycleWithLog.logs.length, 1);
+    assert.equal(cycleWithLog.logs[0].contraceptive, 'tomado');
+    assert.equal(cycleWithLog.logs[0].intimacy, 1);
+
+    // Activar el análisis algorítmico tras un período de 3 meses / 3 ciclos
+    const cycle3Months = await req('/api/cycle/settings', 'PUT', {
+      contraceptive_method: 'pastillas_28',
+      cycleDays: 28,
+      periodDays: 5,
+      lastStart: '2026-11-04',
+      history: ['2026-11-04', '2026-10-06', '2026-09-08', '2026-08-11']
+    }, u2.token);
+    assert.equal(cycle3Months.analysis.algorithmActive, true);
+    assert.equal(cycle3Months.analysis.cyclesRecorded >= 3, true);
+    assert.ok(cycle3Months.analysis.averageCycleDays >= 27 && cycle3Months.analysis.averageCycleDays <= 30);
+    assert.ok(cycle3Months.projections.nextPeriodStart.length === 10);
+    assert.ok(cycle3Months.projections.ovulationDate.length === 10);
+
+    // Borrar registro de un día
+    await req('/api/cycle/log/2026-11-15', 'DELETE', null, u1.token);
+    const cycleAfterDel = await req('/api/cycle?month=2026-11', 'GET', null, u1.token);
+    assert.equal(cycleAfterDel.logs.length, 0);
+
     const aiPlans = await req('/api/plans/ai', 'POST', {}, u1.token);
     assert.ok(aiPlans.plans.length >= 3);
+
+    // 12. Ruletas personalizables para tomar decisiones
+    const { roulettes: roulettesInitial } = await req('/api/roulettes', 'GET', null, u1.token);
+    const initialCount = roulettesInitial.length; // 1 ruleta inicial sembrada por defecto
+
+    const roulCreate = await req('/api/roulettes', 'POST', {
+      name: '¿A quién le toca lavar los platos?',
+      options: ['Franco', 'Daniela', 'Los dos juntos']
+    }, u1.token);
+    assert.ok(roulCreate.id);
+
+    const { roulettes: roulettesAfterAdd } = await req('/api/roulettes', 'GET', null, u1.token);
+    assert.equal(roulettesAfterAdd.length, initialCount + 1);
+    const foundRoul = roulettesAfterAdd.find(r => r.id === roulCreate.id);
+    assert.ok(foundRoul);
+    assert.equal(foundRoul.name, '¿A quién le toca lavar los platos?');
+    assert.equal(foundRoul.options.length, 3);
+
+    await req(`/api/roulettes/${roulCreate.id}`, 'DELETE', null, u1.token);
+    const { roulettes: roulettesAfterDel } = await req('/api/roulettes', 'GET', null, u1.token);
+    assert.equal(roulettesAfterDel.length, initialCount);
 
     console.log('✓ Todos los tests de Fase 1, Fase 2, Herramientas y SpiderWebAPI pasaron correctamente.');
   } finally {

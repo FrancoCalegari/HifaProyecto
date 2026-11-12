@@ -3,6 +3,7 @@ import { api } from '../core/api.js';
 import { escapeHtml, applyTheme, showStatus } from '../core/utils.js';
 import { fileToUploadedUrl } from '../core/upload.js';
 import { populateSetupDialog } from './dialogs.js';
+import { isAdminRoute, renderAdminView } from './admin.js';
 
 let appRouter = null;
 
@@ -22,6 +23,10 @@ export async function bootstrap() {
   } catch (_) {}
 
   if (!state.token) {
+    if (isAdminRoute()) {
+      renderAdminView();
+      return;
+    }
     showAuthView();
     return;
   }
@@ -39,10 +44,18 @@ export async function bootstrap() {
       state.booted = true;
       state.activeTab = profilesReady() ? 'dashboard' : 'couple';
     }
+    if (isAdminRoute()) {
+      renderAdminView();
+      return;
+    }
     showAppShell();
   } catch {
     state.token = '';
     localStorage.removeItem('hifa_token');
+    if (isAdminRoute()) {
+      renderAdminView();
+      return;
+    }
     showAuthView();
   }
 }
@@ -51,7 +64,8 @@ export function showAuthView() {
   document.getElementById('auth-view').hidden = false;
   document.getElementById('app-shell').hidden = true;
   document.getElementById('btn-logout').hidden = true;
-  document.getElementById('btn-open-notifications').hidden = true;
+  const adminBtn = document.getElementById('btn-admin-mode');
+  if (adminBtn) adminBtn.hidden = true;
   document.getElementById('couple-badge').hidden = true;
 }
 
@@ -59,14 +73,17 @@ export function showAppShell() {
   document.getElementById('auth-view').hidden = true;
   document.getElementById('app-shell').hidden = false;
   document.getElementById('btn-logout').hidden = false;
-  document.getElementById('btn-open-notifications').hidden = false;
+  const adminBtn = document.getElementById('btn-admin-mode');
+  if (adminBtn) {
+    adminBtn.hidden = (state.user?.role !== 'admin');
+  }
 
   const badge = document.getElementById('couple-badge');
   if (badge) {
     badge.hidden = false;
     if (state.partner) {
       badge.innerHTML = `<img class="avatar-sm" src="${escapeHtml(state.user.avatar_url)}" alt="" width="32" height="32">
-        ${escapeHtml(state.user.first_name)} ❤️ ${escapeHtml(state.partner.first_name)}
+        ${escapeHtml(state.user.first_name)} <i class="fa-solid fa-heart" style="color:var(--brand); margin:0 0.25rem;"></i> ${escapeHtml(state.partner.first_name)}
         <img class="avatar-sm" src="${escapeHtml(state.partner.avatar_url)}" alt="" width="32" height="32">`;
     } else {
       badge.textContent = `${state.user.first_name} (Sin vincular aún)`;

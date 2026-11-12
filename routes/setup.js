@@ -1,5 +1,7 @@
+const { getAuthUser } = require('../lib/auth');
+
 module.exports = async function handle(c) {
-  const { req, res, apiPath, urlObj, ctx, send } = c;
+  const { req, res, apiPath, urlObj, ctx, db, send } = c;
   const { getConfig, updateConfig, spiderSqlQuery, spiderListDatabases } = ctx;
 
   if (apiPath === '/api/setup' && req.method === 'GET') {
@@ -8,6 +10,11 @@ module.exports = async function handle(c) {
   }
 
   if (apiPath === '/api/setup' && req.method === 'POST') {
+    const auth = getAuthUser(db, req);
+    if (!auth || auth.user.role !== 'admin') {
+      return send(403, { error: 'Acceso denegado: Se requiere rol de administrador para modificar el motor del SaaS.' });
+    }
+
     const body = await c.body();
     const updated = updateConfig({
       db_mode: body.db_mode || 'local',

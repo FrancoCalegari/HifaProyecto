@@ -8,7 +8,7 @@ async function renderCapsulesTab(container) {
 
   container.innerHTML = `
     <section class="card">
-      <h2>⏳ Cápsula del Tiempo (Cartas dedicadas con desbloqueo programado)</h2>
+      <h2><i class="fa-solid fa-hourglass-half"></i> Cápsula del Tiempo (Cartas dedicadas con desbloqueo programado)</h2>
       <form id="form-new-capsule">
         <div class="grid-2">
           <div class="field">
@@ -28,7 +28,7 @@ async function renderCapsulesTab(container) {
           <label for="cap-photo">Foto recuerdo (opcional)</label>
           <input type="file" id="cap-photo" accept="image/*">
         </div>
-        <button type="submit" class="btn btn-primary">🔒 Sellar Cápsula del Tiempo</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-lock"></i> Sellar Cápsula del Tiempo</button>
       </form>
     </section>
 
@@ -41,11 +41,11 @@ async function renderCapsulesTab(container) {
                 c => `<article class="card">
                   <div style="display:flex; justify-content:space-between; align-items:start;">
                     <div>
-                      <span class="badge">${c.locked ? '🔒 Bloqueada' : '🔓 Desbloqueada'}</span>
+                      <span class="badge">${c.locked ? '<i class="fa-solid fa-lock"></i> Bloqueada' : '<i class="fa-solid fa-lock-open"></i> Desbloqueada'}</span>
                       <h3 style="margin:0.35rem 0;">${escapeHtml(c.title)}</h3>
                       <div class="text-muted">De ${escapeHtml(c.author_name || '')} · Se desbloquea: <strong>${escapeHtml(c.unlock_at.replace('T', ' '))}</strong></div>
                     </div>
-                    <button type="button" class="btn btn-sm btn-danger" data-action="delete-capsule" data-id="${c.id}">✕</button>
+                    <button type="button" class="btn btn-sm btn-danger" data-action="delete-capsule" data-id="${c.id}" aria-label="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
                   </div>
                   <p style="margin-top:0.75rem; white-space:pre-wrap;">${escapeHtml(c.body)}</p>
                   ${!c.locked && c.photo_url ? `<img src="${escapeHtml(c.photo_url)}" alt="${escapeHtml(c.title)}" loading="lazy" width="320" height="200" style="max-width:100%; height:auto; border-radius:0.5rem;">` : ''}

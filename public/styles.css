@@ -464,21 +464,180 @@ tbody th {
   max-width: 100%;
 }
 
-.roulette-wheel {
-  width: 240px;
-  height: 240px;
-  border-radius: 50%;
-  border: 6px solid var(--brand);
-  margin: 1rem auto;
+/* ================= RULETA MODERNA E INTERACTIVA ================= */
+.roulette-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 1.25rem 0.5rem;
+  background: radial-gradient(circle at center, rgba(214, 31, 90, 0.04) 0%, transparent 70%);
+  border-radius: 1rem;
+}
+
+.roulette-wrapper {
+  position: relative;
+  width: 340px;
+  height: 340px;
+  max-width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 1.15rem;
+  user-select: none;
+  margin: 0.5rem auto;
+}
+
+.roulette-canvas {
+  border-radius: 50%;
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.35),
+              0 0 0 8px var(--surface-alt),
+              0 0 0 12px var(--brand);
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: block;
+}
+
+.roulette-canvas:hover:not(.is-spinning) {
+  filter: brightness(1.02);
+}
+
+.roulette-needle {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  transition: transform 0.08s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+.roulette-needle.needle-flick {
+  transform: translateX(-50%) rotate(-18deg);
+}
+
+.roulette-center-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), #be123c);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  line-height: 1.1;
+  padding: 0;
+}
+
+.roulette-center-btn:hover:not(:disabled) {
+  transform: translate(-50%, -50%) scale(1.06);
+  filter: brightness(1.1);
+}
+
+.roulette-center-btn:active:not(:disabled) {
+  transform: translate(-50%, -50%) scale(0.96);
+}
+
+.roulette-center-btn:disabled {
+  opacity: 0.9;
+  cursor: not-allowed;
+}
+
+.roulette-winner-box {
+  min-height: 60px;
+  margin-top: 1rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.roulette-winner-card {
+  background: linear-gradient(135deg, rgba(214, 31, 90, 0.12), rgba(16, 185, 129, 0.12));
+  border: 2px solid var(--brand);
+  border-radius: 12px;
+  padding: 0.85rem 1.5rem;
   text-align: center;
-  padding: 1rem;
-  background: conic-gradient(from 0deg, var(--surface-alt), var(--surface), var(--surface-alt));
-  transition: transform 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: winnerPop 0.45s cubic-bezier(0.17, 0.89, 0.32, 1.28) forwards;
+  box-shadow: 0 8px 24px -4px rgba(214, 31, 90, 0.35);
+  width: 100%;
+  max-width: 420px;
+}
+
+.roulette-winner-card .winner-title {
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.roulette-winner-card .winner-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--brand);
+  word-break: break-word;
+}
+
+@keyframes winnerPop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.roulette-preset-list {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-block: 0.75rem;
+}
+
+.roulette-preset-btn {
+  font-size: 0.82rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  border: 1px dashed var(--border);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, transform 0.1s;
+}
+
+.roulette-preset-btn:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: rgba(214, 31, 90, 0.08);
+  transform: translateY(-1px);
+}
+
+.roulette-item-active {
+  border-color: var(--brand) !important;
+  background: rgba(214, 31, 90, 0.05) !important;
+}
+
+@media (max-width: 440px) {
+  .roulette-wrapper {
+    width: 290px;
+    height: 290px;
+  }
+  .roulette-canvas {
+    width: 290px !important;
+    height: 290px !important;
+  }
 }
 
 .progress-track {
@@ -704,4 +863,325 @@ code { background: var(--surface-alt); padding: 0.1em 0.4em; border-radius: 0.3r
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* ================= CICLO MENSTRUAL Y CALENDARIO VISUAL ================= */
+.cycle-calendar-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.cycle-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.cycle-legend .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cycle-legend .legend-icon {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.cycle-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.cycle-col-header {
+  padding: 0.6rem 0.4rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: var(--surface-alt);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.cycle-day-cell {
+  min-height: 85px;
+  padding: 0.45rem;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  position: relative;
+  background: var(--surface);
+}
+
+.cycle-day-cell:nth-child(7n) {
+  border-right: none;
+}
+
+.cycle-day-cell:hover:not(.cycle-cell-muted) {
+  background: var(--surface-alt);
+  filter: brightness(0.98);
+}
+
+.cycle-cell-muted {
+  background: var(--surface-alt);
+  opacity: 0.4;
+  cursor: default;
+}
+
+.cycle-cell-today {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+  background: rgba(214, 31, 90, 0.04);
+}
+
+.cycle-cell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 0.25rem;
+}
+
+.cycle-cell-num {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.cycle-today-chip {
+  font-size: 0.68rem;
+  background: var(--brand);
+  color: #fff;
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.cycle-fire-badge {
+  font-size: 1rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(239, 68, 68, 0.4));
+}
+
+.cycle-cell-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  width: 100%;
+}
+
+/* Indicadores de métodos anticonceptivos */
+.cycle-pill-badge {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pill-taken {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.pill-forgotten {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  animation: pulse 2s infinite;
+}
+
+.pill-placebo {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+/* Flujo menstrual */
+.cycle-flow-ligero {
+  background: rgba(244, 63, 94, 0.08);
+}
+.cycle-flow-moderado {
+  background: rgba(225, 29, 72, 0.15);
+}
+.cycle-flow-abundante {
+  background: rgba(190, 18, 60, 0.25);
+}
+
+.cycle-flow-tag {
+  font-size: 0.8rem;
+}
+
+.cycle-start-tag {
+  font-size: 0.7rem;
+  background: var(--brand);
+  color: #fff;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-weight: 700;
+  width: fit-content;
+}
+
+/* Predicciones */
+.cycle-cell-pred-period {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(244, 63, 94, 0.06),
+    rgba(244, 63, 94, 0.06) 6px,
+    rgba(244, 63, 94, 0.12) 6px,
+    rgba(244, 63, 94, 0.12) 12px
+  );
+}
+
+.cycle-cell-pred-ovulation {
+  background: rgba(168, 85, 247, 0.15);
+}
+
+.cycle-cell-pred-fertile {
+  background: rgba(168, 85, 247, 0.08);
+}
+
+.cycle-pred-tag {
+  font-size: 0.68rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  width: fit-content;
+  font-weight: 600;
+}
+
+.pred-period {
+  background: #ffe4e6;
+  color: #9f1239;
+  border: 1px dashed #fda4af;
+}
+
+.pred-ovulation {
+  background: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid #d8b4fe;
+}
+
+.pred-fertile {
+  background: #f5f3ff;
+  color: #5b21b6;
+}
+
+.cycle-note-dot {
+  font-size: 0.75rem;
+}
+
+/* Tarjeta Algorítmica y barra de progreso */
+.cycle-algo-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.cycle-algo-card.algo-active {
+  border-color: var(--ok);
+}
+
+.cycle-algo-card.algo-learning {
+  border-color: #f59e0b;
+}
+
+.cycle-algo-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cycle-progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: var(--surface-alt);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.cycle-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, var(--brand), var(--ok));
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* Radio buttons visuales en modales */
+.cycle-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.cycle-radio-btn {
+  display: inline-block;
+  cursor: pointer;
+  margin: 0;
+}
+
+.cycle-radio-btn input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.cycle-radio-btn .btn-visual {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  font-size: 0.88rem;
+  user-select: none;
+  transition: border-color 0.15s, background-color 0.15s, transform 0.1s;
+}
+
+.cycle-radio-btn input:checked + .btn-visual {
+  border-color: var(--brand);
+  background: rgba(214, 31, 90, 0.12);
+  font-weight: 700;
+  color: var(--brand);
+}
+
+@media (max-width: 600px) {
+  .cycle-calendar-grid {
+    font-size: 0.75rem;
+  }
+  .cycle-day-cell {
+    min-height: 65px;
+    padding: 0.25rem;
+  }
+  .cycle-pill-badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.25rem;
+  }
 }

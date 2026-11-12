@@ -9,7 +9,7 @@ async function renderTasksTab(container) {
 
   container.innerHTML = `
     <section class="card">
-      <h2>✅ Tableros de Tareas Compartidos</h2>
+      <h2><i class="fa-solid fa-list-check"></i> Tableros de Tareas Compartidos</h2>
       <form id="form-new-task">
         <div class="grid-3">
           <div class="field">
@@ -26,9 +26,9 @@ async function renderTasksTab(container) {
           <div class="field">
             <label for="task-priority">Prioridad</label>
             <select id="task-priority" name="priority">
-              <option value="alta">🔴 Alta</option>
-              <option value="media" selected>🟡 Media</option>
-              <option value="baja">🟢 Baja</option>
+              <option value="alta">Alta</option>
+              <option value="media" selected>Media</option>
+              <option value="baja">Baja</option>
             </select>
           </div>
         </div>
@@ -36,7 +36,7 @@ async function renderTasksTab(container) {
           <div class="field">
             <label for="task-assigned">¿Para quién es?</label>
             <select id="task-assigned" name="assigned_to">
-              <option value="both">👫 Ambos</option>
+              <option value="both">Ambos</option>
               <option value="${state.user.id}">${escapeHtml(state.user.first_name)}</option>
               ${state.partner ? `<option value="${state.partner.id}">${escapeHtml(state.partner.first_name)}</option>` : ''}
             </select>
@@ -46,7 +46,7 @@ async function renderTasksTab(container) {
             <input type="datetime-local" id="task-due" name="due_datetime">
           </div>
         </div>
-        <button type="submit" class="btn btn-primary">Agregar Tarea al Tablero</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Agregar Tarea al Tablero</button>
       </form>
     </section>
 
@@ -55,7 +55,7 @@ async function renderTasksTab(container) {
         .map(board => {
           const boardTasks = tasks.filter(t => t.board_name === board);
           return `<section class="card">
-            <h3>📋 Tablero: ${escapeHtml(board)} (${boardTasks.length})</h3>
+            <h3><i class="fa-solid fa-list-check"></i> Tablero: ${escapeHtml(board)} (${boardTasks.length})</h3>
             ${
               boardTasks.length === 0
                 ? '<p class="text-muted">Sin tareas en este tablero.</p>'
@@ -75,10 +75,10 @@ async function renderTasksTab(container) {
                               <strong>${escapeHtml(t.title)}</strong>
                               <span class="badge">${escapeHtml(t.priority)}</span>
                               <span class="badge">Para: ${escapeHtml(who)}</span>
-                              ${t.due_datetime ? `<small class="text-muted"> · 🕒 ${escapeHtml(t.due_datetime.replace('T', ' '))}</small>` : ''}
+                              ${t.due_datetime ? `<small class="text-muted"> · <i class="fa-regular fa-clock"></i> ${escapeHtml(t.due_datetime.replace('T', ' '))}</small>` : ''}
                             </span>
                           </label>
-                          <button type="button" class="btn btn-sm btn-danger" data-action="delete-task" data-id="${t.id}">✕</button>
+                          <button type="button" class="btn btn-sm btn-danger" data-action="delete-task" data-id="${t.id}" aria-label="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
                         </li>`;
                       })
                       .join('')}

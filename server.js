@@ -10,6 +10,9 @@ const { createCoupleHelpers } = require('./lib/couple');
 // Rutas públicas (sin autenticación), en orden.
 const publicRoutes = [require('./routes/setup'), require('./routes/auth')];
 
+// Rutas de administración (requieren rol admin, sin necesidad de pareja)
+const adminRoutes = [require('./routes/admin')];
+
 // Rutas autenticadas que no requieren pareja vinculada.
 const userRoutes = [require('./routes/me')];
 
@@ -22,6 +25,7 @@ const coupleRoutes = [
   require('./routes/lists'),
   require('./routes/calendar'),
   require('./routes/tools'),
+  require('./routes/cycle'),
   require('./routes/notes'),
   require('./routes/daily'),
   require('./routes/cravings'),
@@ -44,6 +48,8 @@ async function handleApi(c) {
   const auth = getAuthUser(c.db, c.req);
   if (!auth) return c.send(401, { error: 'No autenticado' });
   c.user = auth.user;
+
+  if (await runRoutes(adminRoutes, c)) return;
 
   if (await runRoutes(userRoutes, c)) return;
 
@@ -117,7 +123,7 @@ function createApp(customDataDir) {
 
       // Serve Static Frontend from ./public
       const publicDir = path.join(__dirname, 'public');
-      let safeRel = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+      let safeRel = pathname === '/' || pathname === '/admin' ? 'index.html' : pathname.replace(/^\/+/, '');
       let filePath = path.join(publicDir, safeRel);
       if (!filePath.startsWith(publicDir) || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
         filePath = path.join(publicDir, 'index.html');

@@ -10,19 +10,19 @@ async function renderDailyQuestionTab(container) {
 
   container.innerHTML = `
     <section class="card">
-      <h2>🔥 Pregunta del Día y Racha en Pareja</h2>
+      <h2><i class="fa-solid fa-fire" style="color:#ef4444;"></i> Pregunta del Día y Racha en Pareja</h2>
       <div class="grid-3" style="margin-block-end:1.25rem;">
         <div class="stat-box">
           <div class="text-muted">Racha Actual</div>
-          <div class="stat-value">🔥 ${dq.streak_count} días</div>
+          <div class="stat-value"><i class="fa-solid fa-fire" style="color:#ef4444;"></i> ${dq.streak_count} días</div>
         </div>
         <div class="stat-box">
           <div class="text-muted">Racha Más Larga (Récord)</div>
-          <div class="stat-value">🏆 ${dq.longest_streak} días</div>
+          <div class="stat-value"><i class="fa-solid fa-trophy" style="color:#f59e0b;"></i> ${dq.longest_streak} días</div>
         </div>
         <div class="stat-box">
           <div class="text-muted">Recuperar Racha (${escapeHtml(dq.streak_recovery_month)})</div>
-          <div class="stat-value">💖 ${dq.streak_recoveries_left} / 3 disp.</div>
+          <div class="stat-value"><i class="fa-solid fa-heart" style="color:var(--brand);"></i> ${dq.streak_recoveries_left} / 3 disp.</div>
           <button type="button" class="btn btn-sm" style="margin-top:0.4rem;" data-action="recover-streak" ${dq.streak_recoveries_left <= 0 ? 'disabled' : ''}>
             Usar Recuperación de Racha
           </button>
@@ -54,7 +54,7 @@ async function renderDailyQuestionTab(container) {
             partnerAns
               ? myAns
                 ? escapeHtml(partnerAns.answer_text)
-                : '🔒 <em>¡Tu pareja ya contestó! Escribe tu respuesta para ver la suya e iniciar/sumar la racha.</em>'
+                : '<i class="fa-solid fa-lock"></i> <em>¡Tu pareja ya contestó! Escribe tu respuesta para ver la suya e iniciar/sumar la racha.</em>'
               : '<span class="text-muted">Todavía no contestó hoy.</span>'
           }</p>
         </div>
@@ -76,7 +76,7 @@ export default {
   forms: {
     'form-daily-answer': async (ctx, data) => {
       const res = await api('/api/daily-question/answer', { method: 'POST', body: data });
-      ctx.showStatus(res.both_answered ? `¡Ambos respondieron! Racha actual: ${res.streak_count} 🔥` : 'Respuesta guardada.');
+      ctx.showStatus(res.both_answered ? `¡Ambos respondieron! Racha actual: ${res.streak_count} días` : 'Respuesta guardada.');
       ctx.refresh();
     }
   }

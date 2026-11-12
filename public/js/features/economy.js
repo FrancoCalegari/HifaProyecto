@@ -18,7 +18,7 @@ async function renderEconomyTab(container, ctx) {
   container.innerHTML = `
     <!-- Analítica Global -->
     <section class="card" aria-labelledby="econ-global-title">
-      <h2 id="econ-global-title">📊 Analítica Global (Todos los Medios de Pago)</h2>
+      <h2 id="econ-global-title"><i class="fa-solid fa-chart-pie"></i> Analítica Global (Todos los Medios de Pago)</h2>
       <div class="grid-3" style="margin-block-end:1rem;">
         <div class="stat-box">
           <div class="text-muted">Ingresos Globales</div>
@@ -70,7 +70,7 @@ async function renderEconomyTab(container, ctx) {
     <section class="card" aria-labelledby="wallets-title">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-block-end:0.5rem;">
         <div>
-          <h2 id="wallets-title" style="margin:0;">💳 Billeteras y Tarjetas</h2>
+          <h2 id="wallets-title" style="margin:0;"><i class="fa-solid fa-credit-card"></i> Billeteras y Tarjetas</h2>
           <p class="text-muted" style="margin:0.25rem 0 0 0;">Configura tus tarjetas, medios de pago o consulta su analítica detallada.</p>
         </div>
       </div>
@@ -100,9 +100,9 @@ async function renderEconomyTab(container, ctx) {
                   ${isSelected ? 'Viendo Analítica' : 'Ver Analítica'}
                 </button>
                 <button type="button" class="btn btn-sm" data-action="open-wallet-config" data-wallet='${escapeHtml(JSON.stringify(w))}'>
-                  ⚙️ Configurar
+                  <i class="fa-solid fa-gear"></i> Configurar
                 </button>
-                <button type="button" class="btn btn-sm btn-danger" data-action="delete-wallet" data-id="${w.id}" aria-label="Eliminar billetera ${escapeHtml(w.name)}">✕</button>
+                <button type="button" class="btn btn-sm btn-danger" data-action="delete-wallet" data-id="${w.id}" aria-label="Eliminar billetera ${escapeHtml(w.name)}"><i class="fa-solid fa-xmark"></i></button>
               </div>
             </div>`;
           })
@@ -113,7 +113,7 @@ async function renderEconomyTab(container, ctx) {
         selectedWallet
           ? `<div class="card" style="background:var(--surface-alt);">
               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-                <h3 style="margin:0;">🔍 Analítica de: ${escapeHtml(selectedWallet.name)} (${escapeHtml(selectedWallet.type)})</h3>
+                <h3 style="margin:0;"><i class="fa-solid fa-magnifying-glass-chart"></i> Analítica de: ${escapeHtml(selectedWallet.name)} (${escapeHtml(selectedWallet.type)})</h3>
                 <button type="button" class="btn btn-sm" data-action="select-wallet" data-id="">Cerrar detalle</button>
               </div>
               <p class="text-muted">Ingresos en este medio: <strong class="text-ok">+${formatMoney(selectedWallet.income)}</strong> · Egresos en este medio: <strong class="text-danger">-${formatMoney(selectedWallet.expense)}</strong> · Saldo actual: <strong>${formatMoney(selectedWallet.balance)}</strong></p>
@@ -127,15 +127,15 @@ async function renderEconomyTab(container, ctx) {
     <section class="card" aria-labelledby="recurring-title">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
         <div>
-          <h2 id="recurring-title" style="margin:0;">🔄 Débitos y Pagos Mensuales por Servicios</h2>
+          <h2 id="recurring-title" style="margin:0;"><i class="fa-solid fa-arrows-rotate"></i> Débitos y Pagos Mensuales por Servicios</h2>
           <p class="text-muted" style="margin:0.25rem 0 0 0;">Llegada la fecha configurada, el dinero se descuenta automáticamente de la cuenta y se suma al balance (ej: Disney+ $7.500).</p>
         </div>
         <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
           <button type="button" class="btn btn-sm btn-primary" data-action="open-service-dialog">
-            ➕ Programar Servicio / Débito
+            <i class="fa-solid fa-plus"></i> Programar Servicio / Débito
           </button>
           <button type="button" class="btn btn-sm" data-action="process-recurring-debits">
-            ⚡ Procesar Débitos Ahora
+            <i class="fa-solid fa-bolt"></i> Procesar Débitos Ahora
           </button>
         </div>
       </div>
@@ -167,23 +167,23 @@ async function renderEconomyTab(container, ctx) {
                       </div>
                     </div>
                     <p style="margin:0.4rem 0;">
-                      📅 <strong>Día ${s.day_of_month} de cada mes</strong> · Medio: <strong>${escapeHtml(s.wallet_name || 'Billetera')}</strong> (${escapeHtml(s.wallet_type || '')})
+                      <i class="fa-solid fa-calendar-day"></i> <strong>Día ${s.day_of_month} de cada mes</strong> · Medio: <strong>${escapeHtml(s.wallet_name || 'Billetera')}</strong> (${escapeHtml(s.wallet_type || '')})
                     </p>
                     <p class="text-muted" style="margin:0.2rem 0; font-size:0.85rem;">
                       A cargo de: ${escapeHtml(whoName)} · Modo: ${escapeHtml(s.mode)} ${s.description ? `· ${escapeHtml(s.description)}` : ''}
                     </p>
                     <div style="margin-block:0.4rem; font-size:0.85rem;">
-                      ${isDebitedThisMonth ? '<span class="text-ok">✓ Descontado en el balance este mes</span>' : '<span class="text-muted">⏳ Pendiente para el día ' + s.day_of_month + '</span>'}
+                      ${isDebitedThisMonth ? '<span class="text-ok"><i class="fa-solid fa-circle-check"></i> Descontado en el balance este mes</span>' : '<span class="text-muted"><i class="fa-solid fa-hourglass-half"></i> Pendiente para el día ' + s.day_of_month + '</span>'}
                     </div>
                     <div style="display:flex; gap:0.35rem; flex-wrap:wrap; margin-block-start:0.5rem;">
                       <button type="button" class="btn btn-sm" data-action="toggle-service" data-id="${s.id}" data-active="${s.active ? 0 : 1}">
-                        ${s.active ? '⏸️ Pausar' : '▶️ Activar'}
+                        ${s.active ? '<i class="fa-solid fa-pause"></i> Pausar' : '<i class="fa-solid fa-play"></i> Activar'}
                       </button>
                       <button type="button" class="btn btn-sm" data-action="edit-service" data-service='${escapeHtml(JSON.stringify(s))}'>
-                        ✏️ Editar
+                        <i class="fa-solid fa-pen-to-square"></i> Editar
                       </button>
                       <button type="button" class="btn btn-sm btn-danger" data-action="delete-service" data-id="${s.id}">
-                        ✕
+                        <i class="fa-solid fa-xmark"></i>
                       </button>
                     </div>
                   </div>`;
@@ -196,7 +196,7 @@ async function renderEconomyTab(container, ctx) {
     <!-- Formularios para Registrar Movimiento y Agregar Billetera -->
     <div class="grid-2">
       <section class="card" aria-labelledby="new-tx-title">
-        <h2 id="new-tx-title">➕ Registrar Movimiento Manual</h2>
+        <h2 id="new-tx-title"><i class="fa-solid fa-plus"></i> Registrar Movimiento Manual</h2>
         <form id="form-new-transaction">
           <div class="grid-2">
             <div class="field">
@@ -265,7 +265,7 @@ async function renderEconomyTab(container, ctx) {
       </section>
 
       <section class="card" aria-labelledby="new-wallet-title">
-        <h2 id="new-wallet-title">🏦 Agregar Medio de Pago / Billetera</h2>
+        <h2 id="new-wallet-title"><i class="fa-solid fa-building-columns"></i> Agregar Medio de Pago / Billetera</h2>
         <form id="form-new-wallet">
           <div class="field">
             <label for="w-name">Nombre del medio de pago *</label>
@@ -301,20 +301,20 @@ async function renderEconomyTab(container, ctx) {
               <input type="text" id="w-details" name="details" placeholder="Ej: Alias pareja.mp / *4512">
             </div>
           </div>
-          <button type="submit" class="btn btn-primary">Crear Billetera</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Crear Billetera</button>
         </form>
       </section>
     </div>
 
     <!-- Historial de Movimientos -->
     <section class="card">
-      <h2>📜 Historial Global de Movimientos</h2>
+      <h2><i class="fa-solid fa-receipt"></i> Historial Global de Movimientos</h2>
       ${renderTransactionsTable(transactions, 'Todos los movimientos de la pareja')}
     </section>
 
     <!-- Diálogo nativo: Configurar Tarjeta / Billetera -->
     <dialog id="dialog-config-wallet" aria-labelledby="wallet-config-title">
-      <h2 id="wallet-config-title">⚙️ Configuración del Medio de Pago</h2>
+      <h2 id="wallet-config-title"><i class="fa-solid fa-gear"></i> Configuración del Medio de Pago</h2>
       <p class="text-muted">Modifica el nombre, tipo, saldo o datos faltantes de esta tarjeta o billetera.</p>
       <div id="wallet-dialog-error" class="card text-danger" style="display:none; margin-block:0.5rem; padding:0.5rem 0.75rem; border-color:var(--danger); background:rgba(255,0,0,0.08); font-size:0.9rem;"></div>
       <form id="form-config-wallet">
@@ -362,7 +362,7 @@ async function renderEconomyTab(container, ctx) {
 
     <!-- Diálogo nativo: Programar / Editar Servicio Mensual Recurrente -->
     <dialog id="dialog-recurring-service" aria-labelledby="service-dialog-title">
-      <h2 id="service-dialog-title">🔄 Programar Débito / Servicio Mensual</h2>
+      <h2 id="service-dialog-title"><i class="fa-solid fa-arrows-rotate"></i> Programar Débito / Servicio Mensual</h2>
       <p class="text-muted">Llegada la fecha configurada cada mes, el sistema registrará el egreso y descontará automáticamente el dinero de la cuenta.</p>
       <div id="service-dialog-error" class="card text-danger" style="display:none; margin-block:0.5rem; padding:0.5rem 0.75rem; border-color:var(--danger); background:rgba(255,0,0,0.08); font-size:0.9rem;"></div>
       <form id="form-recurring-service">
@@ -376,7 +376,7 @@ async function renderEconomyTab(container, ctx) {
             <label for="srv-wallet">Medio de pago / Tarjeta donde se debita *</label>
             <select id="srv-wallet" name="wallet_id" required>
               ${wallets.length === 0
-                ? '<option value="">⚠️ Primero agrega una billetera arriba</option>'
+                ? '<option value="">Primero agrega una billetera arriba</option>'
                 : wallets.map(w => `<option value="${w.id}">${escapeHtml(w.name)} (${escapeHtml(w.type)})</option>`).join('')}
             </select>
           </div>
@@ -455,7 +455,7 @@ async function renderEconomyTab(container, ctx) {
       await economyFeature.forms['form-recurring-service'](ctx, data, srvForm);
     } catch (err) {
       if (errBox) {
-        errBox.textContent = '⚠️ ' + err.message;
+        errBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHtml(err.message);
         errBox.style.display = 'block';
       }
       ctx?.showStatus?.(err.message, true);
@@ -480,7 +480,7 @@ async function renderEconomyTab(container, ctx) {
       await economyFeature.forms['form-config-wallet'](ctx, data, walletForm);
     } catch (err) {
       if (errBox) {
-        errBox.textContent = '⚠️ ' + err.message;
+        errBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHtml(err.message);
         errBox.style.display = 'block';
       }
       ctx?.showStatus?.(err.message, true);
@@ -565,7 +565,7 @@ const economyFeature = {
       document.getElementById('srv-id').value = '';
       const errBox = document.getElementById('service-dialog-error');
       if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
-      document.getElementById('service-dialog-title').textContent = '🔄 Programar Débito / Servicio Mensual';
+      document.getElementById('service-dialog-title').innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Programar Débito / Servicio Mensual';
       if (!dialog.open) {
         dialog.showModal();
       }
@@ -585,7 +585,7 @@ const economyFeature = {
       document.getElementById('srv-desc').value = s.description || '';
       const errBox = document.getElementById('service-dialog-error');
       if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
-      document.getElementById('service-dialog-title').textContent = `✏️ Editar Servicio: ${s.name}`;
+      document.getElementById('service-dialog-title').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Editar Servicio: ${escapeHtml(s.name)}`;
       if (!dialog.open) {
         dialog.showModal();
       }

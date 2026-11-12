@@ -18,8 +18,8 @@ function renderCoupleTab(container) {
             <p class="text-muted" style="word-break:break-all; margin-block:0.4rem;">Link: <code>${escapeHtml(shareLink)}</code></p>
           </div>
           <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
-            <button type="button" class="btn btn-primary" data-action="copy-pair-link" data-link="${escapeHtml(shareLink)}">📋 Copiar Link de Invitación</button>
-            <button type="button" class="btn" data-action="regenerate-pair-code">🔄 Generar Nuevo Código</button>
+            <button type="button" class="btn btn-primary" data-action="copy-pair-link" data-link="${escapeHtml(shareLink)}"><i class="fa-solid fa-copy"></i> Copiar Link de Invitación</button>
+            <button type="button" class="btn" data-action="regenerate-pair-code"><i class="fa-solid fa-arrows-rotate"></i> Generar Nuevo Código</button>
           </div>
         </section>
 
@@ -30,7 +30,7 @@ function renderCoupleTab(container) {
               <label for="input-pair-code">Código de tu pareja *</label>
               <input type="text" id="input-pair-code" name="code" value="${escapeHtml(urlPair)}" placeholder="Ej: HIFA-A1B2C3" autocorrect="off" autocapitalize="characters" spellcheck="false" required>
             </div>
-            <button type="submit" class="btn btn-primary">💞 Vincularnos ahora</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-heart"></i> Vincularnos ahora</button>
           </form>
         </section>
       </div>
@@ -43,7 +43,7 @@ function renderCoupleTab(container) {
   if (relStart) {
     const diffMs = Date.now() - new Date(relStart + 'T00:00:00').getTime();
     const days = Math.max(0, Math.floor(diffMs / 86400000));
-    daysTogetherText = `Llevan ${days} días juntos desde el ${relStart} ❤️`;
+    daysTogetherText = `Llevan ${days} días juntos desde el ${relStart} <i class="fa-solid fa-heart" style="color:var(--brand);"></i>`;
   }
 
   const myT = state.user.tastes || {};
@@ -53,7 +53,7 @@ function renderCoupleTab(container) {
     <section class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
         <div>
-          <h2 style="margin:0;">💑 Información y Gustos de la Pareja</h2>
+          <h2 style="margin:0;"><i class="fa-solid fa-heart"></i> Información y Gustos de la Pareja</h2>
           <p class="text-muted" style="margin:0.25rem 0 0 0;">${escapeHtml(daysTogetherText)}</p>
         </div>
         <span class="badge">Pareja #${state.couple.id}</span>
@@ -74,15 +74,15 @@ function renderCoupleTab(container) {
       </div>
 
       <p class="text-muted">
-        Tu formulario: ${state.user.profile_completed ? '<strong class="text-ok">✓ guardado</strong>' : '<strong>pendiente</strong>'} ·
-        ${escapeHtml(state.partner?.first_name || 'Tu pareja')}: ${state.partner?.profile_completed ? '<strong class="text-ok">✓ guardado</strong>' : '<strong>pendiente</strong>'}
+        Tu formulario: ${state.user.profile_completed ? '<strong class="text-ok"><i class="fa-solid fa-check"></i> guardado</strong>' : '<strong>pendiente</strong>'} ·
+        ${escapeHtml(state.partner?.first_name || 'Tu pareja')}: ${state.partner?.profile_completed ? '<strong class="text-ok"><i class="fa-solid fa-check"></i> guardado</strong>' : '<strong>pendiente</strong>'}
       </p>
       <div class="grid-2">
         ${renderTastesFieldset('me', `Mis Gustos y Talles (${state.user.first_name})`, myT)}
         ${state.partner?.profile_completed ? renderPartnerReadonly(paT) : `<fieldset><legend>${escapeHtml(state.partner?.first_name || 'Tu pareja')}</legend><p class="text-muted">Cada uno completa su propia información. Verás la de tu pareja cuando la guarde.</p></fieldset>`}
       </div>
 
-      <button type="submit" class="btn btn-primary">💾 Guardar Información de la Pareja</button>
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar Información de la Pareja</button>
     </form>
   `;
 }

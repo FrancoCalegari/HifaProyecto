@@ -7,13 +7,13 @@ async function renderListsTab(container) {
 
   container.innerHTML = `
     <section class="card">
-      <h2>🛒 Sistema de Listas Compartidas (Compras, Supermercado, etc.)</h2>
+      <h2><i class="fa-solid fa-cart-shopping"></i> Sistema de Listas Compartidas (Compras, Supermercado, etc.)</h2>
       <form id="form-new-list" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
         <div class="field" style="flex:1; margin:0;">
           <label for="list-name">Nombre de nueva lista *</label>
           <input type="text" id="list-name" name="name" placeholder="Ej: Supermercado Mensual, Farmacia, Viaje" required>
         </div>
-        <button type="submit" class="btn btn-primary">Crear Lista</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Crear Lista</button>
       </form>
     </section>
 
@@ -22,8 +22,8 @@ async function renderListsTab(container) {
         .map(
           l => `<section class="card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <h3 style="margin:0;">📝 ${escapeHtml(l.name)}</h3>
-              <button type="button" class="btn btn-sm btn-danger" data-action="delete-list" data-id="${l.id}">Eliminar Lista</button>
+              <h3 style="margin:0;"><i class="fa-solid fa-list-ul"></i> ${escapeHtml(l.name)}</h3>
+              <button type="button" class="btn btn-sm btn-danger" data-action="delete-list" data-id="${l.id}"><i class="fa-solid fa-trash-can"></i> Eliminar Lista</button>
             </div>
             <p class="text-muted">Total estimado: <strong>${formatMoney(l.totalPrice)}</strong> · Comprado: <strong class="text-ok">${formatMoney(l.checkedPrice)}</strong></p>
 
@@ -31,7 +31,7 @@ async function renderListsTab(container) {
               <input type="text" name="name" placeholder="Producto / ítem *" aria-label="Nombre del ítem" required>
               <input type="number" name="price" step="0.01" placeholder="Precio" aria-label="Precio">
               <input type="text" name="quantity" value="1" placeholder="Cant." aria-label="Cantidad">
-              <button type="submit" class="btn btn-primary">+</button>
+              <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i></button>
             </form>
 
             ${
@@ -49,10 +49,10 @@ async function renderListsTab(container) {
                           </label>
                           <div style="display:flex; gap:0.35rem; align-items:center;">
                             <button type="button" class="btn btn-sm" data-action="edit-list-item" data-item='${escapeHtml(JSON.stringify(item))}' aria-label="Editar ${escapeHtml(item.name)}">
-                              ✏️
+                              <i class="fa-solid fa-pen-to-square"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-danger" data-action="delete-list-item" data-id="${item.id}" aria-label="Eliminar ${escapeHtml(item.name)}">
-                              ✕
+                              <i class="fa-solid fa-xmark"></i>
                             </button>
                           </div>
                         </li>`
@@ -67,7 +67,7 @@ async function renderListsTab(container) {
 
     <!-- Diálogo nativo: Editar Ítem de Lista -->
     <dialog id="dialog-edit-item" aria-labelledby="dialog-edit-item-title">
-      <h2 id="dialog-edit-item-title">✏️ Editar Ítem de la Lista</h2>
+      <h2 id="dialog-edit-item-title"><i class="fa-solid fa-pen-to-square"></i> Editar Ítem de la Lista</h2>
       <p class="text-muted">Modifica el nombre, precio estimado o cantidad del producto.</p>
       <form id="form-edit-list-item">
         <input type="hidden" id="edit-item-id" name="id">

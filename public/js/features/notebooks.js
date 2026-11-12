@@ -14,7 +14,7 @@ async function renderNotebooksTab(container) {
 
   container.innerHTML = `
     <section class="card">
-      <h2>📓 Cuadernos Compartidos (Markdown, Listas, Checkboxes, Fotos)</h2>
+      <h2><i class="fa-solid fa-book"></i> Cuadernos Compartidos (Markdown, Listas, Checkboxes, Fotos)</h2>
       <form id="form-new-notebook" style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:flex-end;">
         <div class="field" style="margin:0; width:90px;">
           <label for="nb-icon">Ícono</label>
@@ -24,7 +24,7 @@ async function renderNotebooksTab(container) {
           <label for="nb-title">Título del nuevo cuaderno *</label>
           <input type="text" id="nb-title" name="title" placeholder="Ej: Recetario, Mudanza, Viajes, Películas" required>
         </div>
-        <button type="submit" class="btn btn-primary">Crear Cuaderno</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Crear Cuaderno</button>
       </form>
 
       <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-block-start:1rem;">
@@ -44,14 +44,14 @@ async function renderNotebooksTab(container) {
             <section class="card">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-block-end:0.75rem;">
                 <h3 style="margin:0;">${escapeHtml(activeNb.icon)} ${escapeHtml(activeNb.title)} — Páginas</h3>
-                <button type="button" class="btn btn-sm btn-danger" data-action="delete-notebook" data-id="${activeNb.id}">Eliminar Cuaderno</button>
+                <button type="button" class="btn btn-sm btn-danger" data-action="delete-notebook" data-id="${activeNb.id}"><i class="fa-solid fa-trash-can"></i> Eliminar Cuaderno</button>
               </div>
 
               <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-block-end:1rem;">
                 ${activeNb.pages
                   .map(
                     p => `<button type="button" class="btn btn-sm ${activePage && activePage.id === p.id ? 'btn-primary' : ''}" data-action="select-page" data-id="${p.id}">
-                      📄 ${escapeHtml(p.title)}
+                      <i class="fa-solid fa-file-lines"></i> ${escapeHtml(p.title)}
                     </button>`
                   )
                   .join('')}
@@ -59,7 +59,7 @@ async function renderNotebooksTab(container) {
 
               <form id="form-new-page" data-notebook-id="${activeNb.id}" style="display:flex; gap:0.5rem; margin-block-end:1rem;">
                 <input type="text" name="title" placeholder="Nueva página..." aria-label="Título de nueva página" required>
-                <button type="submit" class="btn btn-sm btn-primary">+ Página</button>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="fa-solid fa-plus"></i> Página</button>
               </form>
 
               ${
@@ -78,8 +78,8 @@ async function renderNotebooksTab(container) {
                         <input type="file" id="page-photo-upload" accept="image/*">
                       </div>
                       <div style="display:flex; gap:0.5rem;">
-                        <button type="submit" class="btn btn-primary">💾 Guardar Página</button>
-                        <button type="button" class="btn btn-danger" data-action="delete-page" data-id="${activePage.id}">Eliminar Página</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar Página</button>
+                        <button type="button" class="btn btn-danger" data-action="delete-page" data-id="${activePage.id}"><i class="fa-solid fa-trash-can"></i> Eliminar Página</button>
                       </div>
                     </form>`
                   : ''
@@ -87,7 +87,7 @@ async function renderNotebooksTab(container) {
             </section>
 
             <section class="card">
-              <h3>👁️ Vista Previa Interactiva</h3>
+              <h3><i class="fa-solid fa-eye"></i> Vista Previa Interactiva</h3>
               <div id="md-preview-box" class="markdown-preview" data-page-id="${activePage?.id || ''}">
                 ${activePage ? renderMarkdown(activePage.markdown_content) : '<p class="text-muted">Selecciona o crea una página.</p>'}
               </div>

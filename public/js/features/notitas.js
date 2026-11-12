@@ -12,7 +12,7 @@ async function renderNotitasTab(container) {
   container.innerHTML = `
     <div class="grid-2">
       <section class="card">
-        <h2>💌 "Notitas" en Pareja (En vivo)</h2>
+        <h2><i class="fa-solid fa-note-sticky"></i> "Notitas" en Pareja (En vivo)</h2>
         <p class="text-muted">Al enviar una notita o dibujo nuevo, <strong>sobrescribe la anterior</strong> y le envía una notificación de <em>"Nota nueva"</em> a tu pareja.</p>
 
         <div class="grid-2" style="margin-block-end:1rem;">
@@ -51,12 +51,12 @@ async function renderNotitasTab(container) {
             </div>
             <canvas id="notita-canvas" class="draw-canvas" width="380" height="200"></canvas>
           </div>
-          <button type="submit" class="btn btn-primary">📨 Enviar "Nota Nueva" (Sobrescribir anterior)</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Enviar "Nota Nueva" (Sobrescribir anterior)</button>
         </form>
       </section>
 
       <section class="card">
-        <h2>📸 Notas Compartidas (con Fotos)</h2>
+        <h2><i class="fa-solid fa-camera"></i> Notas Compartidas (con Fotos)</h2>
         <form id="form-shared-note" style="margin-block-end:1.25rem;">
           <div class="field">
             <label for="note-title">Título de la nota *</label>
@@ -70,7 +70,7 @@ async function renderNotitasTab(container) {
             <label for="note-photo">Foto adjunta (opcional)</label>
             <input type="file" id="note-photo" accept="image/*">
           </div>
-          <button type="submit" class="btn btn-primary">Guardar Nota Compartida</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar Nota Compartida</button>
         </form>
 
         <div style="display:flex; flex-direction:column; gap:0.75rem;">
@@ -82,7 +82,7 @@ async function renderNotitasTab(container) {
                     n => `<article class="stat-box">
                       <div style="display:flex; justify-content:space-between; align-items:start;">
                         <strong>${escapeHtml(n.title)}</strong>
-                        <button type="button" class="btn btn-sm btn-danger" data-action="delete-note" data-id="${n.id}">✕</button>
+                        <button type="button" class="btn btn-sm btn-danger" data-action="delete-note" data-id="${n.id}" aria-label="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
                       </div>
                       <p style="margin:0.4rem 0;">${escapeHtml(n.content)}</p>
                       ${n.photo_url ? `<img src="${escapeHtml(n.photo_url)}" alt="${escapeHtml(n.title)}" loading="lazy" width="320" height="200" style="max-width:100%; height:auto; border-radius:0.5rem;">` : ''}

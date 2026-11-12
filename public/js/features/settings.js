@@ -9,7 +9,7 @@ function renderSettingsTab(container) {
   container.innerHTML = `
     <div class="grid-2">
       <section class="card">
-        <h2>👤 Configuración Individual del Usuario</h2>
+        <h2><i class="fa-solid fa-user"></i> Configuración Individual del Usuario</h2>
         <form id="form-user-settings">
           <div class="grid-2">
             <div class="field">
@@ -70,15 +70,15 @@ function renderSettingsTab(container) {
             <label for="set-new-pw">Nueva contraseña (dejar vacío para mantener la actual)</label>
             <input type="password" id="set-new-pw" name="new_password" autocomplete="new-password">
           </div>
-          <button type="submit" class="btn btn-primary">Guardar Mis Preferencias</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar Mis Preferencias</button>
         </form>
       </section>
 
       <section class="card">
-        <h2>💑 Configuración en Pareja y Motor Cloud/Local</h2>
+        <h2><i class="fa-solid fa-heart"></i> Configuración en Pareja y Motor Cloud/Local</h2>
         <p class="text-muted">Estado de vinculación: <strong>${state.partner ? `Vinculado con ${escapeHtml(state.partner.first_name)} ${escapeHtml(state.partner.last_name)}` : 'Pendiente de vincular'}</strong></p>
         <p class="text-muted">Motor DB activo: <strong>${escapeHtml(state.config.db_mode || 'local')}</strong> · Cloud Storage: <strong>${escapeHtml(state.config.storage_mode || 'local')}</strong></p>
-        <button type="button" class="btn btn-primary" data-action="open-setup-dialog">⚙️ Configurar Proveedor Base de Datos / SpiderWebAPI</button>
+        <button type="button" class="btn btn-primary" data-action="open-setup-dialog"><i class="fa-solid fa-gear"></i> Configurar Proveedor Base de Datos / SpiderWebAPI</button>
       </section>
     </div>
   `;

@@ -1,4 +1,4 @@
-const { safeJson, computeMenstrualProjections } = require('../lib/helpers');
+const { safeJson } = require('../lib/helpers');
 
 module.exports = async function handle(c) {
   const { req, apiPath, ctx, db, user, partner, coupleId, send } = c;
@@ -86,31 +86,6 @@ module.exports = async function handle(c) {
     const id = Number(apiPath.split('/').pop());
     db.prepare('DELETE FROM weekly_plans WHERE id = ? AND couple_id = ?').run(id, coupleId);
     return send(200, { ok: true });
-  }
-
-  // Herramientas: Calendario de Ciclo Menstrual
-  if (apiPath === '/api/menstrual' && req.method === 'GET') {
-    const couple = db.prepare('SELECT menstrual_data_json FROM couples WHERE id = ?').get(coupleId);
-    const data = safeJson(couple.menstrual_data_json, { lastStart: '', periodDays: 5, cycleDays: 28, history: [] });
-    return send(200, { menstrual: computeMenstrualProjections(data) });
-  }
-
-  if (apiPath === '/api/menstrual' && req.method === 'PUT') {
-    const body = await c.body();
-    const couple = db.prepare('SELECT menstrual_data_json FROM couples WHERE id = ?').get(coupleId);
-    const current = safeJson(couple.menstrual_data_json, { lastStart: '', periodDays: 5, cycleDays: 28, history: [] });
-    const nextData = {
-      lastStart: body.lastStart ?? current.lastStart,
-      periodDays: Number(body.periodDays || current.periodDays || 5),
-      cycleDays: Number(body.cycleDays || current.cycleDays || 28),
-      notes: body.notes ?? current.notes ?? '',
-      history: Array.isArray(body.history) ? body.history : current.history || []
-    };
-    if (body.lastStart && !nextData.history.includes(body.lastStart)) {
-      nextData.history = [body.lastStart, ...nextData.history].slice(0, 12);
-    }
-    db.prepare('UPDATE couples SET menstrual_data_json = ? WHERE id = ?').run(JSON.stringify(nextData), coupleId);
-    return send(200, { menstrual: computeMenstrualProjections(nextData) });
   }
 
   return false;

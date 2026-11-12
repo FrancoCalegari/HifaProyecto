@@ -16,6 +16,7 @@ import goalsFeature from '../features/goals.js';
 import capsulesFeature from '../features/capsules.js';
 import notebooksFeature from '../features/notebooks.js';
 import toolsFeature from '../features/tools.js';
+import cycleFeature from '../features/cycle.js';
 import settingsFeature from '../features/settings.js';
 
 const featuresList = [
@@ -32,6 +33,7 @@ const featuresList = [
   capsulesFeature,
   notebooksFeature,
   toolsFeature,
+  cycleFeature,
   settingsFeature
 ];
 
@@ -87,9 +89,9 @@ export async function renderActiveTab() {
   if (!state.user.couple_id && state.activeTab !== 'couple' && state.activeTab !== 'settings') {
     currentFeature = null;
     container.innerHTML = `<section class="card">
-      <h2>🔗 Vincula tu cuenta con tu pareja primero</h2>
+      <h2><i class="fa-solid fa-link"></i> Vincula tu cuenta con tu pareja primero</h2>
       <p>Para desbloquear todas las herramientas de Fase 2 (Economía, Tareas, Listas, Calendario, Ruleta, Pregunta del Día, Antojos, Cápsula del Tiempo, Metas y Cuadernos), primero vincúlate con tu pareja en la pestaña <strong>Pareja y Gustos</strong>.</p>
-      <button type="button" class="btn btn-primary" data-action="go-couple">Ir a Vincular Pareja</button>
+      <button type="button" class="btn btn-primary" data-action="go-couple"><i class="fa-solid fa-arrow-right"></i> Ir a Vincular Pareja</button>
     </section>`;
     return;
   }
@@ -97,9 +99,9 @@ export async function renderActiveTab() {
   if (state.user.couple_id && !profilesReady() && state.activeTab !== 'couple' && state.activeTab !== 'settings') {
     currentFeature = null;
     container.innerHTML = `<section class="card">
-      <h2>📝 Falta completar el formulario de pareja</h2>
+      <h2><i class="fa-solid fa-file-pen"></i> Falta completar el formulario de pareja</h2>
       <p>Cada uno completa su propia información. Cuando <strong>ambos</strong> la guarden se desbloquea el dashboard y el resto de las herramientas.</p>
-      <button type="button" class="btn btn-primary" data-action="go-couple">Ir al formulario</button>
+      <button type="button" class="btn btn-primary" data-action="go-couple"><i class="fa-solid fa-arrow-right"></i> Ir al formulario</button>
     </section>`;
     return;
   }

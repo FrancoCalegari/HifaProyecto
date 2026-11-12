@@ -57,6 +57,7 @@ function initDb(customDataDir) {
       avatar_url TEXT DEFAULT '',
       couple_id INTEGER,
       pair_code TEXT UNIQUE,
+      role TEXT DEFAULT 'user',
       theme TEXT DEFAULT 'system',
       language TEXT DEFAULT 'es',
       currency TEXT DEFAULT 'ARS',
@@ -283,10 +284,47 @@ function initDb(customDataDir) {
       markdown_content TEXT DEFAULT '',
       updated_at TEXT DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS menstrual_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      couple_id INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      contraceptive TEXT DEFAULT '',
+      intimacy INTEGER DEFAULT 0,
+      flow TEXT DEFAULT 'ninguno',
+      is_period_start INTEGER DEFAULT 0,
+      notes TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(couple_id, date)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_menstrual_logs_couple_date ON menstrual_logs(couple_id, date);
   `);
 
   // Migración para bases ya existentes
   try { db.exec('ALTER TABLE users ADD COLUMN profile_completed INTEGER DEFAULT 0'); } catch (_) {}
+  try { db.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'"); } catch (_) {}
+
+  // Seed cuenta de Administrador por defecto si no existe ninguno
+  try {
+    const adminUser = db.prepare("SELECT id FROM users WHERE role = 'admin'").get();
+    if (!adminUser) {
+      const adminEmail = 'admin@hifa.saas';
+      const exists = db.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
+      if (!exists) {
+        const { hashPassword } = require('./lib/auth');
+        const { defaultAvatarSvg } = require('./lib/helpers');
+        db.prepare(`
+          INSERT INTO users (first_name, last_name, age, email, password_hash, avatar_url, pair_code, role, profile_completed)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+        `).run('Admin', 'SaaS', 30, adminEmail, hashPassword('admin123'), defaultAvatarSvg('Admin SaaS'), 'HIFA-ADMIN', 'admin');
+      } else {
+        db.prepare("UPDATE users SET role = 'admin' WHERE id = ?").run(exists.id);
+      }
+    }
+  } catch (err) {
+    console.error('Aviso al sembrar admin:', err.message);
+  }
 
   // Seed default system_config from .env if not yet populated
   const setCfgDefault = db.prepare('INSERT OR IGNORE INTO system_config (key, value) VALUES (?, ?)');

@@ -5,20 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
   <title>Hifa — SaaS para Parejas</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <header class="app-header">
     <div class="brand-bar">
-      <h1>💞 Hifa Parejas</h1>
+      <h1><i class="fa-solid fa-heart" style="color:var(--brand); margin-right:0.25rem;"></i> Hifa Parejas</h1>
       <span id="couple-badge" class="couple-pill" hidden></span>
     </div>
     <div class="header-actions">
-      <button type="button" id="btn-open-setup" class="btn btn-sm">⚙️ <span class="hide-sm">Motor / SpiderWebAPI</span></button>
-      <button type="button" id="btn-open-notifications" class="btn btn-sm" hidden>
-        🔔 <span class="hide-sm">Notificaciones</span> <span id="notif-count" class="badge badge-brand">0</span>
-      </button>
-      <button type="button" id="btn-logout" class="btn btn-sm btn-danger" hidden>Salir</button>
+      <button type="button" id="btn-admin-mode" class="btn btn-sm btn-primary" hidden><i class="fa-solid fa-crown"></i> <span class="hide-sm">Panel Admin</span></button>
+      <button type="button" id="btn-logout" class="btn btn-sm btn-danger" hidden><i class="fa-solid fa-arrow-right-from-bracket"></i> Salir</button>
     </div>
   </header>
 
@@ -31,12 +29,12 @@
       <h2 id="hero-title">Organicen su vida en pareja, <span class="hero-accent">juntos</span>.</h2>
       <p class="hero-lead">Gustos, economía compartida, tareas, calendario, notitas, metas y mucho más en un solo lugar que vive en tu propio servidor.</p>
       <ul class="hero-features" aria-label="Características">
-        <li>💰 Economía</li>
-        <li>✅ Tareas</li>
-        <li>📅 Calendario</li>
-        <li>🔥 Pregunta del día</li>
-        <li>⏳ Cápsula del tiempo</li>
-        <li>🎯 Metas</li>
+        <li><i class="fa-solid fa-wallet"></i> Economía</li>
+        <li><i class="fa-solid fa-list-check"></i> Tareas</li>
+        <li><i class="fa-solid fa-calendar-days"></i> Calendario</li>
+        <li><i class="fa-solid fa-fire"></i> Pregunta del día</li>
+        <li><i class="fa-solid fa-hourglass-half"></i> Cápsula del tiempo</li>
+        <li><i class="fa-solid fa-bullseye"></i> Metas</li>
       </ul>
     </section>
     <div class="grid-2 auth-grid">
@@ -96,29 +94,33 @@
   <div id="app-shell" class="layout-shell" hidden>
     <nav class="side-nav" aria-label="Navegación principal">
       <ul id="nav-list">
-        <li><button type="button" class="nav-btn" data-tab="dashboard" hidden><span class="nav-ico" aria-hidden="true">🏠</span><span class="nav-label">Dashboard</span></button></li>
-        <li><button type="button" class="nav-btn" data-tab="couple" aria-current="page"><span class="nav-ico" aria-hidden="true">💑</span><span class="nav-label">Pareja y Gustos</span></button></li>
-        <li><button type="button" class="nav-btn" data-tab="economy"><span class="nav-ico" aria-hidden="true">💰</span><span class="nav-label">Economía y Billeteras</span></button></li>
-        <li><button type="button" class="nav-btn" data-tab="tasks"><span class="nav-ico" aria-hidden="true">✅</span><span class="nav-label">Tableros de Tareas</span></button></li>
-        <li><button type="button" class="nav-btn" data-tab="lists"><span class="nav-ico" aria-hidden="true">🛒</span><span class="nav-label">Listas y Compras</span></button></li>
-        <li><button type="button" class="nav-btn" data-tab="calendar"><span class="nav-ico" aria-hidden="true">📅</span><span class="nav-label">Calendario y Agenda</span></button></li>
-        <li><button type="button" class="nav-btn" data-tab="notitas"><span class="nav-ico" aria-hidden="true">🎨</span><span class="nav-label">Notitas y Notas</span></button></li>
-        <li><button type="button" class="nav-btn" data-tab="daily"><span class="nav-ico" aria-hidden="true">🔥</span><span class="nav-label">Pregunta del Día</span></button></li>
-        <li><button type="button" class="nav-btn" data-tab="cravings"><span class="nav-ico" aria-hidden="true">🎁</span><span class="nav-label">Antojos</span></button></li>
-        <li><button type="button" class="nav-btn" data-tab="goals"><span class="nav-ico" aria-hidden="true">🎯</span><span class="nav-label">Metas y Proyectos</span></button></li>
-        <li><button type="button" class="nav-btn" data-tab="capsules"><span class="nav-ico" aria-hidden="true">⏳</span><span class="nav-label">Cápsula del Tiempo</span></button></li>
-        <li><button type="button" class="nav-btn" data-tab="notebooks"><span class="nav-ico" aria-hidden="true">📓</span><span class="nav-label">Cuadernos Markdown</span></button></li>
-        <li><button type="button" class="nav-btn" data-tab="tools"><span class="nav-ico" aria-hidden="true">🎡</span><span class="nav-label">Ruleta, Planes IA y Ciclo</span></button></li>
-        <li><button type="button" class="nav-btn" data-tab="settings"><span class="nav-ico" aria-hidden="true">⚙️</span><span class="nav-label">Configuración</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="dashboard" hidden><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-house"></i></span><span class="nav-label">Dashboard</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="couple" aria-current="page"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-heart"></i></span><span class="nav-label">Pareja y Gustos</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="economy"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-wallet"></i></span><span class="nav-label">Economía y Billeteras</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="tasks"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-list-check"></i></span><span class="nav-label">Tableros de Tareas</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="lists"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-cart-shopping"></i></span><span class="nav-label">Listas y Compras</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="calendar"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-calendar-days"></i></span><span class="nav-label">Calendario y Agenda</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="notitas"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-note-sticky"></i></span><span class="nav-label">Notitas y Notas</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="daily"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-fire"></i></span><span class="nav-label">Pregunta del Día</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="cravings"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-gift"></i></span><span class="nav-label">Antojos</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="goals"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-bullseye"></i></span><span class="nav-label">Metas y Proyectos</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="capsules"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-hourglass-half"></i></span><span class="nav-label">Cápsula del Tiempo</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="notebooks"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-book"></i></span><span class="nav-label">Cuadernos Markdown</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="tools"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-dharmachakra"></i></span><span class="nav-label">Ruleta y Planes IA</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="cycle"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-spa"></i></span><span class="nav-label">Ciclo Menstrual</span></button></li>
+        <li><button type="button" class="nav-btn" data-tab="settings"><span class="nav-ico" aria-hidden="true"><i class="fa-solid fa-gear"></i></span><span class="nav-label">Configuración</span></button></li>
       </ul>
     </nav>
 
     <main id="tab-content" class="main-area"></main>
   </div>
 
+  <!-- Admin View (/admin): SaaS & Database Engine Management -->
+  <main id="admin-view" class="main-area admin-view" hidden></main>
+
   <!-- Native Modal Dialog: First-Time Setup / SpiderWebAPI Configuration -->
   <dialog id="dialog-setup" aria-labelledby="setup-dialog-title">
-    <h2 id="setup-dialog-title">Configuración del Sistema (Local / SpiderWebAPI)</h2>
+    <h2 id="setup-dialog-title"><i class="fa-solid fa-gear"></i> Configuración del Sistema (Local / SpiderWebAPI)</h2>
     <p class="text-muted">Pensado para self-hosting local por defecto, con soporte directo para SpiderWebAPI (SQL, Cloud Storage y SpiderIA).</p>
     <form id="form-setup" method="dialog">
       <div class="grid-2">
@@ -160,7 +162,7 @@
 
   <!-- Native Modal Dialog: Notifications -->
   <dialog id="dialog-notifications" aria-labelledby="notif-dialog-title">
-    <h2 id="notif-dialog-title">🔔 Notificaciones de Pareja</h2>
+    <h2 id="notif-dialog-title"><i class="fa-solid fa-bell"></i> Notificaciones de Pareja</h2>
     <div id="notifications-list" style="max-block-size:340px; overflow:auto; margin-block-end:1rem;"></div>
     <form method="dialog" style="display:flex; justify-content:flex-end; gap:0.5rem;">
       <button type="button" id="btn-mark-read" class="btn">Marcar leídas</button>

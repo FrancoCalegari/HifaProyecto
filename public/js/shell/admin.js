@@ -1,0 +1,401 @@
+import { state } from '../core/state.js';
+import { api } from '../core/api.js';
+import { escapeHtml, showStatus } from '../core/utils.js';
+import { bootstrap } from './session.js';
+
+let adminCtx = null;
+
+export function isAdminRoute() {
+  return window.location.pathname === '/admin';
+}
+
+export function enterAdminView() {
+  history.pushState(null, '', '/admin');
+  renderAdminView();
+}
+
+export function exitAdminView() {
+  history.pushState(null, '', '/');
+  document.getElementById('admin-view').hidden = true;
+  bootstrap();
+}
+
+export async function renderAdminView() {
+  const adminView = document.getElementById('admin-view');
+  if (!adminView) return;
+
+  // Ocultar vistas de usuario estándar
+  document.getElementById('auth-view').hidden = true;
+  document.getElementById('app-shell').hidden = true;
+  document.getElementById('couple-badge').hidden = true;
+  adminView.hidden = false;
+
+  // Caso 1: No autenticado o el usuario autenticado no es admin
+  if (!state.token || !state.user || state.user.role !== 'admin') {
+    renderAdminLoginForm(adminView);
+    return;
+  }
+
+  // Caso 2: Autenticado como Administrador
+  try {
+    const data = await api('/api/admin/overview');
+    renderAdminDashboard(adminView, data);
+  } catch (err) {
+    if (err.message?.includes('restringido') || err.message?.includes('autenticado')) {
+      renderAdminLoginForm(adminView, 'Tu sesión actual no tiene rol de administrador. Inicia sesión con la cuenta de administrador.');
+    } else {
+      adminView.innerHTML = `<section class="card text-danger"><p>Error al cargar el panel de administración: ${escapeHtml(err.message)}</p></section>`;
+    }
+  }
+}
+
+function renderAdminLoginForm(container, customMsg = '') {
+  container.innerHTML = `
+    <div style="max-width:440px; margin: 3rem auto; padding: 1rem;">
+      <div class="card" style="box-shadow:0 12px 36px rgba(0,0,0,0.25); border-color:var(--brand);">
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <span style="font-size:2.8rem; color:var(--brand); display:inline-block; margin-bottom:0.4rem;">
+            <i class="fa-solid fa-shield-halved"></i>
+          </span>
+          <h2 style="margin:0.5rem 0 0.25rem;">Panel de Administración</h2>
+          <p class="text-muted" style="font-size:0.9rem; margin:0;">
+            Configuración del motor de base de datos y administración global de Hifa SaaS.
+          </p>
+        </div>
+
+        ${
+          customMsg
+            ? `<div class="card text-danger" style="margin-bottom:1rem; padding:0.5rem 0.75rem; border-color:var(--danger); background:rgba(255,0,0,0.08); font-size:0.9rem;">
+                ${escapeHtml(customMsg)}
+              </div>`
+            : ''
+        }
+        <div id="admin-login-error" class="card text-danger" style="display:none; margin-bottom:1rem; padding:0.5rem 0.75rem; border-color:var(--danger); background:rgba(255,0,0,0.08); font-size:0.9rem;"></div>
+
+        <form id="form-admin-login">
+          <div class="field">
+            <label for="admin-email">Correo de Administrador</label>
+            <input type="email" id="admin-email" name="email" value="admin@hifa.saas" required autocomplete="username">
+          </div>
+          <div class="field">
+            <label for="admin-password">Contraseña</label>
+            <input type="password" id="admin-password" name="password" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem; padding:0.6rem;">
+            <i class="fa-solid fa-lock"></i> Entrar como Administrador
+          </button>
+        </form>
+
+        <div class="stat-box" style="margin-top:1.25rem; font-size:0.85rem; border-left:3px solid var(--brand);">
+          <strong><i class="fa-regular fa-lightbulb"></i> Credenciales iniciales por defecto:</strong><br>
+          Usuario: <code>admin@hifa.saas</code><br>
+          Contraseña: <code>admin123</code>
+        </div>
+
+        <div style="text-align:center; margin-top:1.25rem;">
+          <button type="button" class="btn btn-sm" id="btn-admin-to-app">
+            <i class="fa-solid fa-arrow-left"></i> Volver a la App de Parejas
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('form-admin-login')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const errBox = document.getElementById('admin-login-error');
+    if (errBox) errBox.style.display = 'none';
+
+    try {
+      const fd = new FormData(e.target);
+      const res = await api('/api/auth/login', {
+        method: 'POST',
+        body: Object.fromEntries(fd.entries())
+      });
+
+      if (res.user?.role !== 'admin') {
+        throw new Error('La cuenta ingresada no tiene rol de Administrador.');
+      }
+
+      state.token = res.token;
+      state.user = res.user;
+      localStorage.setItem('hifa_token', res.token);
+      showStatus('Acceso concedido al Panel de Administración.');
+      await renderAdminView();
+    } catch (err) {
+      if (errBox) {
+        errBox.textContent = err.message;
+        errBox.style.display = 'block';
+      } else {
+        showStatus(err.message, true);
+      }
+    }
+  });
+
+  document.getElementById('btn-admin-to-app')?.addEventListener('click', () => {
+    exitAdminView();
+  });
+}
+
+function renderAdminDashboard(container, data) {
+  const { config, stats, users } = data;
+
+  container.innerHTML = `
+    <div style="display:flex; flex-direction:column; gap:1.25rem; max-width:1100px; margin: 1rem auto; padding: 0 1rem;">
+      <!-- Barra superior de Administración -->
+      <section class="card" style="border-left: 4px solid var(--brand);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h2 style="margin:0; display:flex; align-items:center; gap:0.5rem;">
+              <span style="color:#f59e0b;"><i class="fa-solid fa-crown"></i></span> Panel de Administración Hifa SaaS
+            </h2>
+            <p class="text-muted" style="margin:0.25rem 0 0 0;">
+              Sesión activa: <strong>${escapeHtml(state.user.email)}</strong> · Rol: <span class="badge badge-success"><i class="fa-solid fa-shield"></i> Administrador</span>
+            </p>
+          </div>
+          <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm" id="btn-admin-exit"><i class="fa-solid fa-heart" style="color:var(--brand);"></i> Ir a la App de Parejas</button>
+            <button type="button" class="btn btn-sm btn-danger" id="btn-admin-logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Salir</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Métricas globales del SaaS -->
+      <div class="grid-4">
+        <div class="stat-box">
+          <span class="text-muted"><i class="fa-solid fa-users"></i> Usuarios Registrados</span>
+          <strong style="font-size:1.6rem; color:var(--brand);">${stats.usersCount}</strong>
+          <small class="text-muted">Cuentas en total</small>
+        </div>
+        <div class="stat-box">
+          <span class="text-muted"><i class="fa-solid fa-heart"></i> Parejas Vinculadas</span>
+          <strong style="font-size:1.6rem; color:var(--ok);">${stats.couplesCount}</strong>
+          <small class="text-muted">Vínculos activos</small>
+        </div>
+        <div class="stat-box">
+          <span class="text-muted"><i class="fa-solid fa-wallet"></i> Billeteras Creadas</span>
+          <strong style="font-size:1.6rem;">${stats.walletsCount}</strong>
+          <small class="text-muted">Cuentas financieras</small>
+        </div>
+        <div class="stat-box">
+          <span class="text-muted"><i class="fa-solid fa-database"></i> Motor de Base de Datos</span>
+          <strong style="font-size:1.2rem; text-transform:uppercase;">${escapeHtml(config.db_mode || 'local')}</strong>
+          <small class="text-muted">Almacenamiento: ${escapeHtml(config.storage_mode || 'local')}</small>
+        </div>
+      </div>
+
+      <!-- Configuración del Motor de Base de Datos y Almacenamiento -->
+      <section class="card">
+        <h2><i class="fa-solid fa-gear"></i> Configuración del Motor de Base de Datos y SpiderWebAPI</h2>
+        <p class="text-muted">
+          Define si Hifa opera con la base de datos SQLite embebida local o conectado a SpiderWebAPI para base de datos remota SQL y Cloud Storage en nube.
+        </p>
+
+        <form id="form-admin-setup" style="margin-top:1rem;">
+          <div class="grid-2">
+            <div class="field">
+              <label for="adm-db-mode">Modo de Base de Datos *</label>
+              <select id="adm-db-mode" name="db_mode" required>
+                <option value="local" ${config.db_mode === 'local' ? 'selected' : ''}>Local (SQLite embebido en servidor)</option>
+                <option value="spiderweb" ${config.db_mode === 'spiderweb' ? 'selected' : ''}>Remoto (SpiderWebAPI SQL)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="adm-storage-mode">Modo de Almacenamiento de Archivos *</label>
+              <select id="adm-storage-mode" name="storage_mode" required>
+                <option value="local" ${config.storage_mode === 'local' ? 'selected' : ''}>Local (Disco del servidor en ./uploads)</option>
+                <option value="spiderweb" ${config.storage_mode === 'spiderweb' ? 'selected' : ''}>Remoto (SpiderCloudStorage ID)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="adm-api-url">URL de SpiderWebAPI</label>
+              <input type="text" id="adm-api-url" name="spiderweb_api_url" value="${escapeHtml(config.spiderweb_api_url || 'https://spiderwebargapi.com.ar/api/v1')}">
+            </div>
+            <div class="field">
+              <label for="adm-dbname">Nombre de Base de Datos SpiderWeb (spiderwebdbname)</label>
+              <input type="text" id="adm-dbname" name="spiderwebdbname" value="${escapeHtml(config.spiderwebdbname || '')}" placeholder="sw_Usuario_nombreDb">
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="adm-apikey">API Key de SpiderWebAPI (spiderapikey)</label>
+              <input type="password" id="adm-apikey" name="spiderapikey" value="${escapeHtml(config.spiderapikey || '')}" placeholder="Clave secreta API">
+            </div>
+            <div class="field">
+              <label for="adm-storageid">Spider Cloud Storage ID (spidercloudstrogaeid)</label>
+              <input type="text" id="adm-storageid" name="spidercloudstrogaeid" value="${escapeHtml(config.spidercloudstrogaeid || '')}" placeholder="Ej: 47">
+            </div>
+          </div>
+
+          <div id="admin-spider-output" class="stat-box" style="display:none; margin-block:0.75rem; font-family:monospace; font-size:0.85rem; word-break:break-all;"></div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-top:1rem;">
+            <button type="button" class="btn" id="btn-admin-test-spider"><i class="fa-solid fa-bolt"></i> Probar Conexión con SpiderWebAPI</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar Configuración del Motor</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Gestión de Usuarios y Roles -->
+      <section class="card">
+        <h2><i class="fa-solid fa-users"></i> Usuarios Registrados en el SaaS (${users.length})</h2>
+        <p class="text-muted">Supervisa los usuarios del sistema y asigna permisos de Administrador.</p>
+
+        <div style="overflow-x:auto; margin-top:0.75rem;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border); text-align:left;">
+                <th style="padding:0.6rem 0.5rem;">ID</th>
+                <th style="padding:0.6rem 0.5rem;">Nombre</th>
+                <th style="padding:0.6rem 0.5rem;">Correo</th>
+                <th style="padding:0.6rem 0.5rem;">Rol</th>
+                <th style="padding:0.6rem 0.5rem;">Pareja</th>
+                <th style="padding:0.6rem 0.5rem;">Registro</th>
+                <th style="padding:0.6rem 0.5rem; text-align:right;">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${users
+                .map(u => {
+                  const isAdmin = u.role === 'admin';
+                  const isSelf = u.id === state.user.id;
+                  return `
+                    <tr style="border-bottom:1px solid var(--border);">
+                      <td style="padding:0.6rem 0.5rem; font-weight:700;">#${u.id}</td>
+                      <td style="padding:0.6rem 0.5rem;">${escapeHtml(u.first_name)} ${escapeHtml(u.last_name)}</td>
+                      <td style="padding:0.6rem 0.5rem;"><code>${escapeHtml(u.email)}</code></td>
+                      <td style="padding:0.6rem 0.5rem;">
+                        <span class="badge ${isAdmin ? 'badge-success' : ''}" style="${isAdmin ? 'background:#10b98120; color:var(--ok); border:1px solid var(--ok);' : ''}">
+                          ${isAdmin ? '<i class="fa-solid fa-crown"></i> admin' : '<i class="fa-solid fa-user"></i> user'}
+                        </span>
+                      </td>
+                      <td style="padding:0.6rem 0.5rem;">
+                        ${u.couple_id ? `<span class="badge">Pareja #${u.couple_id}</span>` : '<span class="text-muted">Sin pareja</span>'}
+                      </td>
+                      <td style="padding:0.6rem 0.5rem; font-size:0.8rem; color:var(--muted);">${escapeHtml(String(u.created_at || '').slice(0, 10))}</td>
+                      <td style="padding:0.6rem 0.5rem; text-align:right;">
+                        ${
+                          isSelf
+                            ? '<small class="text-muted">(Tu cuenta)</small>'
+                            : `<button type="button" class="btn btn-sm ${isAdmin ? 'btn-danger' : 'btn-primary'}" data-admin-action="toggle-role" data-user-id="${u.id}" data-target-role="${isAdmin ? 'user' : 'admin'}">
+                                ${isAdmin ? '<i class="fa-solid fa-user-minus"></i> Quitar Admin' : '<i class="fa-solid fa-crown"></i> Hacer Admin'}
+                              </button>`
+                        }
+                      </td>
+                    </tr>
+                  `;
+                })
+                .join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  `;
+
+  // Event Listeners del Dashboard
+  document.getElementById('btn-admin-exit')?.addEventListener('click', () => {
+    exitAdminView();
+  });
+
+  document.getElementById('btn-admin-logout')?.addEventListener('click', async () => {
+    await api('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    state.token = '';
+    state.user = null;
+    localStorage.removeItem('hifa_token');
+    showStatus('Sesión cerrada.');
+    renderAdminView();
+  });
+
+  document.getElementById('btn-admin-test-spider')?.addEventListener('click', async () => {
+    const out = document.getElementById('admin-spider-output');
+    if (!out) return;
+    out.style.display = 'block';
+    out.textContent = 'Probando conexión con SpiderWebAPI...';
+    try {
+      const res = await api('/api/admin/spiderweb/test', {
+        method: 'POST',
+        body: {
+          spiderweb_api_url: document.getElementById('adm-api-url')?.value,
+          spiderwebdbname: document.getElementById('adm-dbname')?.value,
+          spiderapikey: document.getElementById('adm-apikey')?.value,
+          spidercloudstrogaeid: document.getElementById('adm-storageid')?.value
+        }
+      });
+      out.innerHTML = res.ok
+        ? `<span class="text-ok"><i class="fa-solid fa-circle-check"></i> Conexión exitosa:</span> ${escapeHtml(JSON.stringify(res.databases || res.data || 'OK'))}`
+        : `<span class="text-warning"><i class="fa-solid fa-triangle-exclamation"></i> Aviso de SpiderWebAPI:</span> ${escapeHtml(res.error)}`;
+    } catch (err) {
+      out.innerHTML = `<span class="text-danger"><i class="fa-solid fa-circle-xmark"></i> Error:</span> ${escapeHtml(err.message)}`;
+    }
+  });
+
+  document.getElementById('form-admin-setup')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      const res = await api('/api/admin/setup', {
+        method: 'POST',
+        body: {
+          db_mode: document.getElementById('adm-db-mode')?.value,
+          storage_mode: document.getElementById('adm-storage-mode')?.value,
+          spiderweb_api_url: document.getElementById('adm-api-url')?.value,
+          spiderwebdbname: document.getElementById('adm-dbname')?.value,
+          spiderapikey: document.getElementById('adm-apikey')?.value,
+          spidercloudstrogaeid: document.getElementById('adm-storageid')?.value
+        }
+      });
+      state.config = res.config;
+      showStatus('Configuración del motor de base de datos actualizada.');
+      await renderAdminView();
+    } catch (err) {
+      showStatus(err.message, true);
+    }
+  });
+
+  // Delegar cambio de roles
+  container.querySelectorAll('[data-admin-action="toggle-role"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const targetUserId = btn.dataset.userId;
+      const targetRole = btn.dataset.targetRole;
+      try {
+        await api(`/api/admin/users/${targetUserId}/role`, {
+          method: 'POST',
+          body: { role: targetRole }
+        });
+        showStatus(`Rol de usuario actualizado a ${targetRole}.`);
+        await renderAdminView();
+      } catch (err) {
+        showStatus(err.message, true);
+      }
+    });
+  });
+}
+
+export function initAdmin(ctx) {
+  adminCtx = ctx;
+
+  // Botón en el header del app shell (visible solo para admin)
+  document.getElementById('btn-admin-mode')?.addEventListener('click', () => {
+    enterAdminView();
+  });
+
+  // Si cargó directamente con la ruta /admin
+  if (isAdminRoute()) {
+    renderAdminView();
+  }
+
+  // Manejo de historial del navegador (atrás/adelante)
+  window.addEventListener('popstate', () => {
+    if (isAdminRoute()) {
+      renderAdminView();
+    } else {
+      document.getElementById('admin-view').hidden = true;
+      bootstrap();
+    }
+  });
+}
+
