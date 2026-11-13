@@ -1,3 +1,10 @@
+const {
+  createLocalBackup,
+  listLocalBackups,
+  restoreLocalBackup,
+  migrateLocalToSpiderWeb
+} = require('../lib/cloud-migration');
+
 module.exports = async function handle(c) {
   const { req, apiPath, ctx, db, user, send } = c;
   const { getConfig, updateConfig, spiderSqlQuery, spiderListDatabases } = ctx;
@@ -27,6 +34,7 @@ module.exports = async function handle(c) {
       stats,
       users,
       couples,
+      backups: listLocalBackups(ctx),
       cloudSync: {
         lastSync: ctx.getLastSyncTime?.(),
         isVercel: process.env.VERCEL === '1',
@@ -47,6 +55,16 @@ module.exports = async function handle(c) {
       spiderweb_api_url: body.spiderweb_api_url,
       setup_completed: '1'
     });
+
+    if (body.migrate_to_remote && updated.db_mode === 'spiderweb') {
+      try {
+        const migration = await migrateLocalToSpiderWeb(ctx);
+        return send(200, { ok: true, config: migration.config, migration });
+      } catch (err) {
+        return send(400, { error: `Configuración guardada, pero falló la migración: ${err.message}` });
+      }
+    }
+
     return send(200, { ok: true, config: updated });
   }
 
@@ -92,6 +110,46 @@ module.exports = async function handle(c) {
       return send(200, { ok: result.ok, result, lastSync: ctx.getLastSyncTime?.() });
     }
     return send(400, { error: 'Sincronizador en la nube no disponible.' });
+  }
+
+  // 6. Migrar datos locales a proveedor externo (SpiderWebAPI SQL + Storage) y dejar respaldo local
+  if (apiPath === '/api/admin/migrate' && req.method === 'POST') {
+    const body = await c.body();
+    if (body && (body.spiderapikey || body.spiderwebdbname || body.spidercloudstrogaeid || body.spiderweb_api_url)) {
+      updateConfig({
+        spiderwebdbname: body.spiderwebdbname,
+        spiderapikey: body.spiderapikey,
+        spidercloudstrogaeid: body.spidercloudstrogaeid,
+        spiderweb_api_url: body.spiderweb_api_url
+      });
+    }
+    try {
+      const migration = await migrateLocalToSpiderWeb(ctx);
+      return send(200, migration);
+    } catch (err) {
+      return send(400, { error: err.message });
+    }
+  }
+
+  // 7. Crear respaldo local manual
+  if (apiPath === '/api/admin/backups' && req.method === 'POST') {
+    try {
+      const backup = createLocalBackup(ctx, 'manual');
+      return send(200, { ok: true, backup, backups: listLocalBackups(ctx) });
+    } catch (err) {
+      return send(400, { error: err.message });
+    }
+  }
+
+  // 8. Restaurar respaldo local
+  if (apiPath === '/api/admin/backups/restore' && req.method === 'POST') {
+    const body = await c.body();
+    try {
+      const result = restoreLocalBackup(ctx, body.filename);
+      return send(200, result);
+    } catch (err) {
+      return send(400, { error: err.message });
+    }
   }
 
   return send(404, { error: 'Endpoint de administración no encontrado' });

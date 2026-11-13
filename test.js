@@ -439,7 +439,26 @@ async function runTests() {
     const adminSyncRes = await req('/api/admin/cloud-sync', 'POST', {}, adminLogin.token);
     assert.ok(adminSyncRes.ok !== undefined, 'cloud-sync response should return status');
 
-    console.log('✓ Todos los tests de Fase 1, Fase 2, Herramientas, Vercel Serverless y SpiderWebAPI pasaron correctamente.');
+    // 14. Admin Local Backups & Restore
+    const backupCreateRes = await req('/api/admin/backups', 'POST', {}, adminLogin.token);
+    assert.equal(backupCreateRes.ok, true);
+    assert.ok(backupCreateRes.backup.filename.endsWith('.db'));
+
+    const overviewAfterBackup = await req('/api/admin/overview', 'GET', null, adminLogin.token);
+    assert.ok(Array.isArray(overviewAfterBackup.backups));
+    assert.ok(overviewAfterBackup.backups.some(b => b.filename === backupCreateRes.backup.filename));
+
+    const restoreRes = await req(
+      '/api/admin/backups/restore',
+      'POST',
+      { filename: backupCreateRes.backup.filename },
+      adminLogin.token
+    );
+    assert.equal(restoreRes.ok, true);
+    assert.equal(restoreRes.restoredFrom, backupCreateRes.backup.filename);
+    assert.ok(restoreRes.safetyBackup.endsWith('.db'));
+
+    console.log('✓ Todos los tests de Fase 1, Fase 2, Herramientas, Vercel Serverless, Backups y SpiderWebAPI pasaron correctamente.');
   } finally {
     server.close();
     fs.rmSync(tmpDir, { recursive: true, force: true });

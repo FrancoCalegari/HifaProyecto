@@ -138,7 +138,7 @@ function renderAdminLoginForm(container, customMsg = '') {
 }
 
 function renderAdminDashboard(container, data) {
-  const { config, stats, users, cloudSync } = data;
+  const { config, stats, users, cloudSync, backups = [] } = data;
 
   container.innerHTML = `
     <div style="display:flex; flex-direction:column; gap:1.25rem; max-width:1100px; margin: 1rem auto; padding: 0 1rem;">
@@ -255,13 +255,71 @@ function renderAdminDashboard(container, data) {
             </div>
           </div>
 
+          <div class="field" style="margin-top:0.5rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-weight:500;">
+              <input type="checkbox" id="chk-admin-migrate" name="migrate_to_remote" checked>
+              Si el modo es Remoto (SpiderWebAPI), migrar datos locales a los remotos, usar los remotos y conservar respaldo local
+            </label>
+          </div>
+
           <div id="admin-spider-output" class="stat-box" style="display:none; margin-block:0.75rem; font-family:monospace; font-size:0.85rem; word-break:break-all;"></div>
 
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-top:1rem;">
-            <button type="button" class="btn" id="btn-admin-test-spider"><i class="fa-solid fa-bolt"></i> Probar Conexión con SpiderWebAPI</button>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button type="button" class="btn" id="btn-admin-test-spider"><i class="fa-solid fa-bolt"></i> Probar Conexión</button>
+              <button type="button" class="btn" id="btn-admin-migrate-remote" style="border-color:var(--brand); color:var(--brand);">
+                <i class="fa-solid fa-right-left"></i> Migrar Local → Remoto (Backup Local)
+              </button>
+            </div>
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar Configuración del Motor</button>
           </div>
+          ${
+            config.last_migration_at
+              ? `<p class="text-muted" style="margin:0.65rem 0 0 0; font-size:0.85rem;">
+                   <i class="fa-solid fa-circle-check text-ok"></i> Última migración remota: <strong>${escapeHtml(config.last_migration_at.replace('T', ' ').slice(0, 19))}</strong>
+                   ${config.last_local_backup ? `· Backup local creado: <code>${escapeHtml(config.last_local_backup)}</code>` : ''}
+                 </p>`
+              : ''
+          }
         </form>
+      </section>
+
+      <!-- Respaldos Locales (Backups de Seguridad) -->
+      <section class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+          <div>
+            <h2 style="margin:0;"><i class="fa-solid fa-box-archive"></i> Respaldos Locales (Backup de Seguridad)</h2>
+            <p class="text-muted" style="margin:0.25rem 0 0 0;">
+              Al conectar un proveedor remoto como SpiderWebAPI, los datos locales se conservan aquí como respaldo seguro.
+            </p>
+          </div>
+          <button type="button" class="btn btn-sm btn-primary" id="btn-admin-create-backup">
+            <i class="fa-solid fa-plus"></i> Crear Backup Local Ahora
+          </button>
+        </div>
+
+        <div style="margin-top:0.75rem;">
+          ${
+            backups.length === 0
+              ? '<p class="text-muted">Aún no hay archivos de respaldo en <code>data/backups/</code>.</p>'
+              : `<div style="display:flex; flex-direction:column; gap:0.5rem;">
+                  ${backups
+                    .map(
+                      b => `<div class="stat-box" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                        <div>
+                          <code>${escapeHtml(b.filename)}</code>
+                          <span class="badge">${(b.size / 1024).toFixed(1)} KB</span>
+                          <small class="text-muted"> · ${escapeHtml(b.createdAt.replace('T', ' ').slice(0, 19))}</small>
+                        </div>
+                        <button type="button" class="btn btn-sm" data-admin-action="restore-backup" data-filename="${escapeHtml(b.filename)}">
+                          <i class="fa-solid fa-clock-rotate-left"></i> Restaurar Backup
+                        </button>
+                      </div>`
+                    )
+                    .join('')}
+                </div>`
+          }
+        </div>
       </section>
 
       <!-- Gestión de Usuarios y Roles -->
@@ -360,12 +418,55 @@ function renderAdminDashboard(container, data) {
 
   document.getElementById('form-admin-setup')?.addEventListener('submit', async e => {
     e.preventDefault();
+    const out = document.getElementById('admin-spider-output');
+    const migrateChecked = Boolean(document.getElementById('chk-admin-migrate')?.checked);
+    const dbMode = document.getElementById('adm-db-mode')?.value;
+    if (migrateChecked && dbMode === 'spiderweb' && out) {
+      out.style.display = 'block';
+      out.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creando backup local y migrando datos hacia SpiderWebAPI...';
+    }
     try {
       const res = await api('/api/admin/setup', {
         method: 'POST',
         body: {
-          db_mode: document.getElementById('adm-db-mode')?.value,
+          db_mode: dbMode,
           storage_mode: document.getElementById('adm-storage-mode')?.value,
+          spiderweb_api_url: document.getElementById('adm-api-url')?.value,
+          spiderwebdbname: document.getElementById('adm-dbname')?.value,
+          spiderapikey: document.getElementById('adm-apikey')?.value,
+          spidercloudstrogaeid: document.getElementById('adm-storageid')?.value,
+          migrate_to_remote: migrateChecked
+        }
+      });
+      state.config = res.config;
+      if (res.migration) {
+        showStatus(`Migración completada: ${res.migration.tablesMigrated} tablas y ${res.migration.rowsMigrated} registros migrados. Backup local: ${res.migration.backup.filename}`);
+      } else {
+        showStatus('Configuración del motor de base de datos actualizada.');
+      }
+      await renderAdminView();
+    } catch (err) {
+      if (out) {
+        out.style.display = 'block';
+        out.innerHTML = `<span class="text-danger"><i class="fa-solid fa-circle-xmark"></i> ${escapeHtml(err.message)}</span>`;
+      }
+      showStatus(err.message, true);
+    }
+  });
+
+  // Migrar manualmente local -> remoto SpiderWebAPI (dejando respaldo local)
+  document.getElementById('btn-admin-migrate-remote')?.addEventListener('click', async () => {
+    const out = document.getElementById('admin-spider-output');
+    const btn = document.getElementById('btn-admin-migrate-remote');
+    if (btn) btn.disabled = true;
+    if (out) {
+      out.style.display = 'block';
+      out.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creando backup local, subiendo archivos y migrando tablas SQL a SpiderWebAPI...';
+    }
+    try {
+      const res = await api('/api/admin/migrate', {
+        method: 'POST',
+        body: {
           spiderweb_api_url: document.getElementById('adm-api-url')?.value,
           spiderwebdbname: document.getElementById('adm-dbname')?.value,
           spiderapikey: document.getElementById('adm-apikey')?.value,
@@ -373,11 +474,48 @@ function renderAdminDashboard(container, data) {
         }
       });
       state.config = res.config;
-      showStatus('Configuración del motor de base de datos actualizada.');
+      showStatus(`Migración exitosa: ${res.tablesMigrated} tablas, ${res.rowsMigrated} filas y ${res.filesMigrated} archivos migrados. Respaldo local guardado.`);
+      await renderAdminView();
+    } catch (err) {
+      if (out) {
+        out.style.display = 'block';
+        out.innerHTML = `<span class="text-danger"><i class="fa-solid fa-circle-xmark"></i> Error de migración:</span> ${escapeHtml(err.message)}`;
+      }
+      showStatus(err.message, true);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+
+  // Crear backup local manual
+  document.getElementById('btn-admin-create-backup')?.addEventListener('click', async () => {
+    try {
+      const res = await api('/api/admin/backups', { method: 'POST', body: {} });
+      showStatus(`Respaldo local creado: ${res.backup?.filename}`);
       await renderAdminView();
     } catch (err) {
       showStatus(err.message, true);
     }
+  });
+
+  // Restaurar un backup local
+  container.querySelectorAll('[data-admin-action="restore-backup"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const filename = btn.dataset.filename;
+      if (!confirm(`¿Restaurar el respaldo local "${filename}"? Se guardará una copia de seguridad del estado actual antes de restaurar.`)) {
+        return;
+      }
+      try {
+        const res = await api('/api/admin/backups/restore', {
+          method: 'POST',
+          body: { filename }
+        });
+        showStatus(`Base de datos restaurada desde ${res.restoredFrom}. Copia previa: ${res.safetyBackup}`);
+        await renderAdminView();
+      } catch (err) {
+        showStatus(err.message, true);
+      }
+    });
   });
 
   // Forzar sincronización de base de datos a la nube
