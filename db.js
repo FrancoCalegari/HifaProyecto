@@ -307,6 +307,17 @@ function initDb(customDataDir) {
       UNIQUE(couple_id, date)
     );
 
+    CREATE TABLE IF NOT EXISTS media_assets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      local_filename TEXT NOT NULL UNIQUE,
+      local_url TEXT NOT NULL,
+      remote_file_id TEXT DEFAULT '',
+      remote_url TEXT DEFAULT '',
+      mime_type TEXT DEFAULT 'application/octet-stream',
+      file_size INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_menstrual_logs_couple_date ON menstrual_logs(couple_id, date);
   `);
 
@@ -337,14 +348,23 @@ function initDb(customDataDir) {
   }
 
   // Seed default system_config from .env if not yet populated
+  const isVercel = process.env.VERCEL === '1';
+  const defaultMode = isVercel || process.env.NODE_ENV === 'production' ? 'spiderweb' : 'local';
   const setCfgDefault = db.prepare('INSERT OR IGNORE INTO system_config (key, value) VALUES (?, ?)');
-  setCfgDefault.run('db_mode', process.env.DB_MODE || 'local');
-  setCfgDefault.run('storage_mode', process.env.STORAGE_MODE || 'local');
+  setCfgDefault.run('db_mode', process.env.DB_MODE || defaultMode);
+  setCfgDefault.run('storage_mode', process.env.STORAGE_MODE || defaultMode);
   setCfgDefault.run('spiderwebdbname', process.env.spiderwebdbname || 'sw_Franco Calegari_hifaRemote');
   setCfgDefault.run('spiderapikey', process.env.spiderapikey || 'a6ccadadd08b030c1acbe89bbe66c202b6c9658736165072ab3fa5719b3749cf');
   setCfgDefault.run('spidercloudstrogaeid', process.env.spidercloudstrogaeid || '47');
   setCfgDefault.run('spiderweb_api_url', process.env.SPIDERWEB_API_URL || 'https://spiderwebargapi.com.ar/api/v1');
-  setCfgDefault.run('setup_completed', '0');
+  setCfgDefault.run('setup_completed', isVercel ? '1' : '0');
+
+  // En Vercel no existe almacenamiento local persistente: forzar modo remoto
+  if (isVercel) {
+    const forceCfg = db.prepare('INSERT INTO system_config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
+    forceCfg.run('db_mode', 'spiderweb');
+    forceCfg.run('storage_mode', 'spiderweb');
+  }
 
   // Seed daily questions if empty
   const qCount = db.prepare('SELECT COUNT(*) as c FROM daily_questions').get().c;
@@ -429,6 +449,9 @@ function initDb(customDataDir) {
     let fileUrl = `/uploads/${safeName}`;
     let remoteResult = null;
 
+    let remoteFileId = '';
+    let remoteUrl = '';
+
     if (cfg.storage_mode === 'spiderweb' && cfg.spiderapikey && cfg.spidercloudstrogaeid) {
       try {
         const apiUrl = cfg.spiderweb_api_url || 'https://spiderwebargapi.com.ar/api/v1';
@@ -436,19 +459,34 @@ function initDb(customDataDir) {
         form.append('files', new Blob([buffer], { type: mimeType }), safeName);
         const resp = await fetch(`${apiUrl}/storage/projects/${cfg.spidercloudstrogaeid}/files`, {
           method: 'POST',
-          headers: { 'X-API-KEY': cfg.spiderapikey },
+          headers: { 'X-API-KEY': cfg.spiderapikey, 'User-Agent': 'Hifa-SaaS/1.0' },
           body: form
         });
         remoteResult = await resp.json();
         const uploadFile = remoteResult.file || remoteResult.files?.[0];
         if (uploadFile && uploadFile.id) {
+          remoteFileId = String(uploadFile.id);
           fileUrl = `/api/storage/remote/${uploadFile.id}?fallback=${encodeURIComponent(fileUrl)}`;
+          remoteUrl = fileUrl;
         }
       } catch (err) {
         // Fallback to local URL if remote storage is unreachable
         remoteResult = { error: err.message };
       }
     }
+
+    try {
+      db.prepare(`
+        INSERT INTO media_assets (local_filename, local_url, remote_file_id, remote_url, mime_type, file_size)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(local_filename) DO UPDATE SET
+          remote_file_id = COALESCE(NULLIF(excluded.remote_file_id, ''), media_assets.remote_file_id),
+          remote_url = COALESCE(NULLIF(excluded.remote_url, ''), media_assets.remote_url),
+          mime_type = excluded.mime_type,
+          file_size = excluded.file_size
+      `).run(safeName, `/uploads/${safeName}`, remoteFileId, remoteUrl, mimeType, buffer.length);
+    } catch (_) {}
+
     return { url: fileUrl, localUrl: `/uploads/${safeName}`, remote: remoteResult };
   }
 

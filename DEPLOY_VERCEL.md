@@ -67,11 +67,14 @@ En la sección **"Environment Variables"** de Vercel, agrega las siguientes clav
 
 | Variable | Valor Recomendado | Descripción |
 |---|---|---|
+| `NODE_ENV` | `production` | Entorno de producción |
+| `DB_MODE` | `spiderweb` | Motor de base de datos remoto (obligatorio en Vercel) |
+| `STORAGE_MODE` | `spiderweb` | Modo de almacenamiento en la nube (obligatorio en Vercel) |
+| `CLOUD_SYNC` | `1` | Activa la sincronización automática de base de datos con la nube |
 | `spiderwebdbname` | `sw_Franco Calegari_hifaRemote` | Nombre de base de datos en SpiderWebAPI |
 | `spiderapikey` | `a6ccadadd08b030c1acbe89bbe66c202b6c9658736165072ab3fa5719b3749cf` | API Key secreta de SpiderWebAPI |
 | `spidercloudstrogaeid` | `47` | ID del proyecto de Cloud Storage |
 | `SPIDERWEB_API_URL` | `https://spiderwebargapi.com.ar/api/v1` | URL base de SpiderWebAPI |
-| `STORAGE_MODE` | `spiderweb` | Modo de almacenamiento en la nube |
 | `ADMIN_EMAIL` | `admin@hifa.saas` *(o tu correo personal)* | Correo del administrador para el panel `/admin` |
 | `ADMIN_PASSWORD` | *(Tu contraseña segura)* | Contraseña del administrador |
 
