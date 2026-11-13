@@ -131,6 +131,115 @@ function renderAdminLoginForm(container, customMsg = '') {
   });
 }
 
+function renderAiConfigCard(config) {
+  const aiProvider = config.ai_provider || 'spideria';
+  const spiderAiModel = config.spider_ai_model || '';
+  const hasDedicatedSpiderAiKey = Boolean((config.spider_ai_apikey || '').trim());
+  const hasGeneralSpiderKey = Boolean((config.spiderapikey || '').trim());
+  const hasGeminiKey = Boolean((config.gemini_apikey || '').trim());
+  const geminiModel = config.gemini_model || 'gemini-2.5-flash';
+
+  const activeBadge =
+    aiProvider === 'gemini'
+      ? `<span class="badge badge-success"><i class="fa-solid fa-sparkles"></i> Gemini (${escapeHtml(geminiModel)})</span>`
+      : aiProvider === 'local'
+        ? '<span class="badge"><i class="fa-solid fa-microchip"></i> HifaIA Local Contextual</span>'
+        : `<span class="badge badge-success"><i class="fa-solid fa-robot"></i> SpiderWeb IA (${escapeHtml(spiderAiModel || 'Auto')})</span>`;
+
+  return `
+      <!-- Configuración de Inteligencia Artificial (SpiderWeb IA / Google Gemini) -->
+      <section class="card" style="border-left: 4px solid #8b5cf6;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+          <h2 style="margin:0;"><i class="fa-solid fa-robot"></i> Configuración de Inteligencia Artificial</h2>
+          ${activeBadge}
+        </div>
+        <p class="text-muted" style="margin:0.4rem 0 0 0;">
+          Elige qué motor de IA genera las sugerencias inteligentes (planes de citas, ideas personalizadas) y qué modelo y API Key utiliza.
+        </p>
+
+        <form id="form-admin-ai" style="margin-top:1rem;">
+          <div class="field">
+            <label for="adm-ai-provider">Proveedor de IA Activo *</label>
+            <select id="adm-ai-provider" name="ai_provider">
+              <option value="spideria" ${aiProvider === 'spideria' ? 'selected' : ''}>SpiderWeb IA (/ia/models y /ia/chat)</option>
+              <option value="gemini" ${aiProvider === 'gemini' ? 'selected' : ''}>Google Gemini API (generativelanguage.googleapis.com)</option>
+              <option value="local" ${aiProvider === 'local' ? 'selected' : ''}>Solo HifaIA Local Contextual (sin API externa)</option>
+            </select>
+          </div>
+
+          <div id="adm-ai-spider-panel" class="stat-box" style="margin-top:0.75rem; ${aiProvider === 'spideria' ? '' : 'opacity:0.75;'}">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.65rem;">
+              <strong><i class="fa-solid fa-spider"></i> SpiderWeb IA</strong>
+              <small class="text-muted">
+                ${
+                  hasDedicatedSpiderAiKey
+                    ? 'Usando API Key dedicada de IA'
+                    : hasGeneralSpiderKey
+                      ? 'Heredando spiderapikey general configurada arriba'
+                      : 'Sin API Key configurada'
+                }
+              </small>
+            </div>
+            <div class="grid-2">
+              <div class="field">
+                <label for="adm-spider-ai-apikey">API Key para SpiderWeb IA (opcional)</label>
+                <div style="display:flex; gap:0.4rem;">
+                  <input type="password" id="adm-spider-ai-apikey" name="spider_ai_apikey" value="${escapeHtml(config.spider_ai_apikey || '')}" placeholder="Vacío = usar spiderapikey general" style="flex:1;">
+                  <button type="button" class="btn btn-sm" data-toggle-secret="adm-spider-ai-apikey" title="Mostrar u ocultar clave"><i class="fa-solid fa-eye"></i></button>
+                </div>
+              </div>
+              <div class="field">
+                <label for="adm-spider-ai-model">Modelo de SpiderWeb IA</label>
+                <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                  <select id="adm-spider-ai-model" name="spider_ai_model" style="flex:1; min-width:180px;">
+                    <option value="" ${!spiderAiModel ? 'selected' : ''}>Automático (primer modelo disponible)</option>
+                    ${spiderAiModel ? `<option value="${escapeHtml(spiderAiModel)}" selected>${escapeHtml(spiderAiModel)} (guardado)</option>` : ''}
+                  </select>
+                  <button type="button" class="btn btn-sm" id="btn-admin-load-ai-models">
+                    <i class="fa-solid fa-rotate"></i> Cargar modelos
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="adm-ai-gemini-panel" class="stat-box" style="margin-top:0.75rem; ${aiProvider === 'gemini' ? '' : 'opacity:0.75;'}">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.65rem;">
+              <strong><i class="fa-solid fa-wand-magic-sparkles"></i> Google Gemini API</strong>
+              <small class="text-muted">${hasGeminiKey ? 'API Key de Gemini configurada' : 'Ingresa una API Key de Google AI Studio'}</small>
+            </div>
+            <div class="grid-2">
+              <div class="field">
+                <label for="adm-gemini-apikey">API Key de Gemini (GEMINI_API_KEY)</label>
+                <div style="display:flex; gap:0.4rem;">
+                  <input type="password" id="adm-gemini-apikey" name="gemini_apikey" value="${escapeHtml(config.gemini_apikey || '')}" placeholder="AIza..." style="flex:1;">
+                  <button type="button" class="btn btn-sm" data-toggle-secret="adm-gemini-apikey" title="Mostrar u ocultar clave"><i class="fa-solid fa-eye"></i></button>
+                </div>
+              </div>
+              <div class="field">
+                <label for="adm-gemini-model">Modelo de Gemini</label>
+                <input type="text" id="adm-gemini-model" name="gemini_model" list="adm-gemini-models-list" value="${escapeHtml(geminiModel)}" placeholder="gemini-2.5-flash">
+                <datalist id="adm-gemini-models-list">
+                  <option value="gemini-2.5-flash">
+                  <option value="gemini-2.5-pro">
+                  <option value="gemini-2.0-flash">
+                  <option value="gemini-1.5-flash">
+                </datalist>
+              </div>
+            </div>
+          </div>
+
+          <div id="admin-ai-output" class="stat-box" style="display:none; margin-block:0.75rem; font-family:monospace; font-size:0.85rem; word-break:break-word;"></div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-top:1rem;">
+            <button type="button" class="btn" id="btn-admin-test-ai"><i class="fa-solid fa-flask"></i> Probar IA Activa</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar Configuración de IA</button>
+          </div>
+        </form>
+      </section>
+  `;
+}
+
 function renderAdminDashboard(container, data) {
   const { config, stats, users, cloudSync, backups = [] } = data;
 
@@ -277,6 +386,8 @@ function renderAdminDashboard(container, data) {
           }
         </form>
       </section>
+
+      ${renderAiConfigCard(config)}
 
       <!-- Respaldos Locales (Backups de Seguridad) -->
       <section class="card">
@@ -549,6 +660,147 @@ function renderAdminDashboard(container, data) {
         showStatus(err.message, true);
       }
     });
+  });
+
+  // Mostrar / ocultar API Keys
+  container.querySelectorAll('[data-toggle-secret]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.toggleSecret);
+      if (!input) return;
+      const isPass = input.type === 'password';
+      input.type = isPass ? 'text' : 'password';
+      btn.innerHTML = `<i class="fa-solid ${isPass ? 'fa-eye-slash' : 'fa-eye'}"></i>`;
+    });
+  });
+
+  const populateSpiderAiModels = (models = [], selectedValue = null) => {
+    const select = document.getElementById('adm-spider-ai-model');
+    if (!select) return;
+    const current = selectedValue !== null ? selectedValue : select.value;
+    const seen = new Set();
+    const options = ['<option value="">Automático (primer modelo disponible)</option>'];
+    for (const m of models) {
+      if (!m?.id || seen.has(m.id)) continue;
+      seen.add(m.id);
+      const label = m.name && m.name !== m.id ? `${m.name} (${m.id})` : m.id;
+      options.push(
+        `<option value="${escapeHtml(m.id)}" ${current === m.id ? 'selected' : ''}>${escapeHtml(label)}</option>`
+      );
+    }
+    if (current && !seen.has(current)) {
+      options.push(`<option value="${escapeHtml(current)}" selected>${escapeHtml(current)} (guardado)</option>`);
+    }
+    select.innerHTML = options.join('');
+  };
+
+  // Resaltar subpanel según proveedor activo
+  document.getElementById('adm-ai-provider')?.addEventListener('change', e => {
+    const provider = e.target.value;
+    const spiderPanel = document.getElementById('adm-ai-spider-panel');
+    const geminiPanel = document.getElementById('adm-ai-gemini-panel');
+    if (spiderPanel) spiderPanel.style.opacity = provider === 'spideria' ? '1' : '0.75';
+    if (geminiPanel) geminiPanel.style.opacity = provider === 'gemini' ? '1' : '0.75';
+  });
+
+  const loadSpiderAiModels = async (silent = false) => {
+    const out = document.getElementById('admin-ai-output');
+    const btn = document.getElementById('btn-admin-load-ai-models');
+    if (!silent && btn) btn.disabled = true;
+    if (!silent && out) {
+      out.style.display = 'block';
+      out.textContent = 'Consultando modelos disponibles en SpiderWeb IA (/ia/models)...';
+    }
+    try {
+      const res = await api('/api/admin/ai/models', {
+        method: 'POST',
+        body: {
+          spiderweb_api_url: document.getElementById('adm-api-url')?.value,
+          spiderapikey: document.getElementById('adm-apikey')?.value,
+          spider_ai_apikey: document.getElementById('adm-spider-ai-apikey')?.value
+        }
+      });
+      if (res.ok && Array.isArray(res.models)) {
+        populateSpiderAiModels(res.models);
+        if (!silent && out) {
+          out.innerHTML = `<span class="text-ok"><i class="fa-solid fa-circle-check"></i> ${res.models.length} modelo(s) cargado(s) desde SpiderWeb IA.</span>`;
+        }
+      } else if (!silent && out) {
+        out.innerHTML = `<span class="text-warning"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHtml(res.error || 'No se pudieron obtener modelos')}</span>`;
+      }
+    } catch (err) {
+      if (!silent && out) {
+        out.innerHTML = `<span class="text-danger"><i class="fa-solid fa-circle-xmark"></i> ${escapeHtml(err.message)}</span>`;
+      }
+    } finally {
+      if (!silent && btn) btn.disabled = false;
+    }
+  };
+
+  document.getElementById('btn-admin-load-ai-models')?.addEventListener('click', () => {
+    loadSpiderAiModels(false);
+  });
+
+  if (config.spiderapikey || config.spider_ai_apikey) {
+    loadSpiderAiModels(true);
+  }
+
+  document.getElementById('btn-admin-test-ai')?.addEventListener('click', async () => {
+    const out = document.getElementById('admin-ai-output');
+    const btn = document.getElementById('btn-admin-test-ai');
+    if (btn) btn.disabled = true;
+    if (out) {
+      out.style.display = 'block';
+      out.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Probando proveedor de IA configurado...';
+    }
+    try {
+      const res = await api('/api/admin/ai/test', {
+        method: 'POST',
+        body: {
+          ai_provider: document.getElementById('adm-ai-provider')?.value,
+          spiderweb_api_url: document.getElementById('adm-api-url')?.value,
+          spiderapikey: document.getElementById('adm-apikey')?.value,
+          spider_ai_apikey: document.getElementById('adm-spider-ai-apikey')?.value,
+          spider_ai_model: document.getElementById('adm-spider-ai-model')?.value,
+          gemini_apikey: document.getElementById('adm-gemini-apikey')?.value,
+          gemini_model: document.getElementById('adm-gemini-model')?.value
+        }
+      });
+      if (Array.isArray(res.models) && res.models.length > 0) {
+        populateSpiderAiModels(res.models);
+      }
+      if (out) {
+        out.innerHTML = res.ok
+          ? `<span class="text-ok"><i class="fa-solid fa-circle-check"></i> IA operativa (${escapeHtml(res.provider)} · ${escapeHtml(res.model || '')}):</span> ${escapeHtml(res.sampleReply || 'OK')}`
+          : `<span class="text-warning"><i class="fa-solid fa-triangle-exclamation"></i> Aviso de IA:</span> ${escapeHtml(res.error)}`;
+      }
+    } catch (err) {
+      if (out) {
+        out.innerHTML = `<span class="text-danger"><i class="fa-solid fa-circle-xmark"></i> Error:</span> ${escapeHtml(err.message)}`;
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+
+  document.getElementById('form-admin-ai')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      const res = await api('/api/admin/ai/config', {
+        method: 'POST',
+        body: {
+          ai_provider: document.getElementById('adm-ai-provider')?.value,
+          spider_ai_apikey: document.getElementById('adm-spider-ai-apikey')?.value,
+          spider_ai_model: document.getElementById('adm-spider-ai-model')?.value,
+          gemini_apikey: document.getElementById('adm-gemini-apikey')?.value,
+          gemini_model: document.getElementById('adm-gemini-model')?.value
+        }
+      });
+      state.config = res.config;
+      showStatus('Configuración de Inteligencia Artificial guardada correctamente.');
+      await renderAdminView();
+    } catch (err) {
+      showStatus(err.message, true);
+    }
   });
 }
 

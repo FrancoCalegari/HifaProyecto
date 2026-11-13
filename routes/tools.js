@@ -146,15 +146,16 @@ module.exports = async function handle(c) {
       extra: [myTastes.additional_tastes, pTastes.additional_tastes]
     };
     const aiResult = await generateAiPlans(coupleContext);
+    const providerLabel = aiResult.provider || 'SpiderIA';
     const ins = db.prepare(
-      'INSERT INTO weekly_plans (couple_id, title, category, weather, source, proposed_by, planned_by) VALUES (?, ?, ?, ?, \'ai\', ?, \'SpiderIA\')'
+      'INSERT INTO weekly_plans (couple_id, title, category, weather, source, proposed_by, planned_by) VALUES (?, ?, ?, ?, \'ai\', ?, ?)'
     );
     const inserted = [];
     for (const p of aiResult.plans) {
-      const info = ins.run(coupleId, p.title, p.category || 'IA', p.weather || 'Cualquiera', user.id);
-      inserted.push({ id: Number(info.lastInsertRowid), ...p, source: 'ai', planned_by: 'SpiderIA', media: [] });
+      const info = ins.run(coupleId, p.title, p.category || 'IA', p.weather || 'Cualquiera', user.id, providerLabel);
+      inserted.push({ id: Number(info.lastInsertRowid), ...p, source: 'ai', planned_by: providerLabel, media: [] });
     }
-    return send(200, { provider: aiResult.provider, plans: inserted });
+    return send(200, { provider: providerLabel, model: aiResult.model || null, plans: inserted });
   }
 
   if (apiPath.match(/^\/api\/plans\/\d+\/select$/) && req.method === 'POST') {

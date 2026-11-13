@@ -152,6 +152,48 @@ module.exports = async function handle(c) {
     }
   }
 
+  // 9. Guardar configuración de IA (SpiderWeb IA / Google Gemini / Local)
+  if (apiPath === '/api/admin/ai/config' && req.method === 'POST') {
+    const body = await c.body();
+    const provider = ['spideria', 'gemini', 'local'].includes(body.ai_provider)
+      ? body.ai_provider
+      : 'spideria';
+    const updated = updateConfig({
+      ai_provider: provider,
+      spider_ai_model: body.spider_ai_model !== undefined ? String(body.spider_ai_model).trim() : undefined,
+      spider_ai_apikey: body.spider_ai_apikey !== undefined ? String(body.spider_ai_apikey).trim() : undefined,
+      gemini_apikey: body.gemini_apikey !== undefined ? String(body.gemini_apikey).trim() : undefined,
+      gemini_model: body.gemini_model !== undefined ? String(body.gemini_model).trim() || 'gemini-2.5-flash' : undefined
+    });
+    return send(200, { ok: true, config: updated });
+  }
+
+  // 10. Listar modelos disponibles en SpiderWeb IA (/ia/models)
+  if (apiPath === '/api/admin/ai/models' && req.method === 'POST') {
+    const body = await c.body();
+    try {
+      const models = await ctx.listSpiderAiModels({
+        spiderweb_api_url: body.spiderweb_api_url,
+        spiderapikey: body.spiderapikey,
+        spider_ai_apikey: body.spider_ai_apikey
+      });
+      return send(200, { ok: true, models });
+    } catch (err) {
+      return send(200, { ok: false, error: err.message, models: [] });
+    }
+  }
+
+  // 11. Probar configuración de IA activa (SpiderIA / Gemini / Local)
+  if (apiPath === '/api/admin/ai/test' && req.method === 'POST') {
+    const body = await c.body();
+    try {
+      const result = await ctx.testAiConfig(body || {});
+      return send(200, result);
+    } catch (err) {
+      return send(200, { ok: false, error: err.message });
+    }
+  }
+
   return send(404, { error: 'Endpoint de administración no encontrado' });
 };
 

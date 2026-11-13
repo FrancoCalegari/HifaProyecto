@@ -558,6 +558,83 @@ async function runTests() {
     const dashCheck = await req('/api/dashboard', 'GET', null, u1.token);
     assert.ok(typeof dashCheck.days_together === 'number' && dashCheck.me);
 
+    // 16. Admin AI Configuration (SpiderWeb IA & Gemini API)
+    const overviewAi = await req('/api/admin/overview', 'GET', null, adminLogin.token);
+    assert.ok(overviewAi.config.ai_provider);
+    assert.ok(overviewAi.config.gemini_model);
+
+    const saveGemini = await req('/api/admin/ai/config', 'POST', {
+      ai_provider: 'gemini',
+      gemini_apikey: 'AIzaTestKey123',
+      gemini_model: 'gemini-2.5-pro',
+      spider_ai_model: 'spider-llama-3',
+      spider_ai_apikey: 'spider-ai-secret'
+    }, adminLogin.token);
+    assert.equal(saveGemini.ok, true);
+    assert.equal(saveGemini.config.ai_provider, 'gemini');
+    assert.equal(saveGemini.config.gemini_apikey, 'AIzaTestKey123');
+    assert.equal(saveGemini.config.gemini_model, 'gemini-2.5-pro');
+    assert.equal(saveGemini.config.spider_ai_model, 'spider-llama-3');
+    assert.equal(saveGemini.config.spider_ai_apikey, 'spider-ai-secret');
+
+    const localAiTest = await req('/api/admin/ai/test', 'POST', { ai_provider: 'local' }, adminLogin.token);
+    assert.equal(localAiTest.ok, true);
+    assert.equal(localAiTest.provider, 'local');
+
+    // Non-admin user cannot access AI admin endpoints
+    const forbiddenAiRes = await fetch(`${baseUrl}/api/admin/ai/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${u1.token}` },
+      body: JSON.stringify({ ai_provider: 'local' })
+    });
+    assert.equal(forbiddenAiRes.status, 403);
+
+    // Unit test SpiderIA vs Gemini execution paths in lib/ai.js
+    const aiLib = require('./lib/ai');
+    const origFetch = global.fetch;
+    try {
+      global.fetch = async (url, opts) => {
+        if (String(url).includes('generativelanguage.googleapis.com')) {
+          assert.ok(String(url).includes('gemini-2.5-flash'));
+          assert.ok(String(url).includes('key=GEM_KEY'));
+          return {
+            ok: true,
+            json: async () => ({
+              candidates: [{ content: { parts: [{ text: '[{"title":"Cita Gemini","category":"Cita","weather":"Templado"}]' }] } }]
+            })
+          };
+        }
+        if (String(url).endsWith('/ia/chat')) {
+          const parsedBody = JSON.parse(opts.body);
+          assert.equal(parsedBody.model_id, 'spider-custom-model');
+          assert.equal(opts.headers['X-API-KEY'], 'SPIDER_DEDICATED_KEY');
+          return {
+            ok: true,
+            json: async () => ({
+              message: { content: '```json\n[{"title":"Cita SpiderIA","category":"Salida","weather":"Cualquiera"}]\n```' }
+            })
+          };
+        }
+        throw new Error(`Unexpected fetch URL: ${url}`);
+      };
+
+      const gemPlans = await aiLib.generateAiPlans(
+        { ai_provider: 'gemini', gemini_apikey: 'GEM_KEY', gemini_model: 'gemini-2.5-flash' },
+        { foods: ['Pizza'] }
+      );
+      assert.equal(gemPlans.provider, 'Gemini');
+      assert.equal(gemPlans.plans[0].title, 'Cita Gemini');
+
+      const spiderPlans = await aiLib.generateAiPlans(
+        { ai_provider: 'spideria', spider_ai_apikey: 'SPIDER_DEDICATED_KEY', spider_ai_model: 'spider-custom-model' },
+        { foods: ['Sushi'] }
+      );
+      assert.equal(spiderPlans.provider, 'SpiderIA');
+      assert.equal(spiderPlans.plans[0].title, 'Cita SpiderIA');
+    } finally {
+      global.fetch = origFetch;
+    }
+
     console.log('✓ Todos los tests de Fase 1, Fase 2, Herramientas, Vercel Serverless, Backups y SpiderWebAPI pasaron correctamente.');
   } finally {
     server.close();

@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { restoreDbFromCloud, syncDbToCloud, scheduleDbSync, getLastSyncTime } = require('./lib/cloud-sync');
+const ai = require('./lib/ai');
 
 // Load .env or .env.production if present
 const envFiles = [
@@ -380,6 +381,11 @@ function initDb(customDataDir) {
   setCfgDefault.run('spiderapikey', process.env.spiderapikey || 'a6ccadadd08b030c1acbe89bbe66c202b6c9658736165072ab3fa5719b3749cf');
   setCfgDefault.run('spidercloudstrogaeid', process.env.spidercloudstrogaeid || '47');
   setCfgDefault.run('spiderweb_api_url', process.env.SPIDERWEB_API_URL || 'https://spiderwebargapi.com.ar/api/v1');
+  setCfgDefault.run('ai_provider', process.env.AI_PROVIDER || 'spideria');
+  setCfgDefault.run('spider_ai_model', process.env.SPIDER_AI_MODEL || '');
+  setCfgDefault.run('spider_ai_apikey', process.env.SPIDER_AI_APIKEY || '');
+  setCfgDefault.run('gemini_apikey', process.env.GEMINI_API_KEY || '');
+  setCfgDefault.run('gemini_model', process.env.GEMINI_MODEL || ai.DEFAULT_GEMINI_MODEL);
   setCfgDefault.run('setup_completed', isVercel ? '1' : '0');
 
   // En Vercel no existe almacenamiento local persistente: forzar modo remoto
@@ -514,60 +520,15 @@ function initDb(customDataDir) {
   }
 
   async function generateAiPlans(coupleContext) {
-    const cfg = getConfig();
-    const apiUrl = cfg.spiderweb_api_url || 'https://spiderwebargapi.com.ar/api/v1';
-    if (cfg.spiderapikey) {
-      try {
-        const modelsResp = await fetch(`${apiUrl}/ia/models`, {
-          headers: { 'X-API-KEY': cfg.spiderapikey },
-          signal: AbortSignal.timeout(5000)
-        }).then(r => r.json());
-        const modelId = modelsResp?.models?.[0]?.id;
-        if (modelId) {
-          const reply = await fetch(`${apiUrl}/ia/chat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-API-KEY': cfg.spiderapikey },
-            body: JSON.stringify({
-              model_id: modelId,
-              messages: [
-                {
-                  role: 'system',
-                  content: 'Eres un asistente experto en citas y planes para parejas. Devuelve SOLO un JSON array de 3 objetos con {"title": "...", "category": "...", "weather": "..."} sin texto extra.'
-                },
-                {
-                  role: 'user',
-                  content: `Propone 3 planes semanales creativos para esta pareja según sus gustos: ${JSON.stringify(coupleContext)}`
-                }
-              ]
-            }),
-            signal: AbortSignal.timeout(8000)
-          }).then(r => r.json());
-          const content = reply?.message?.content || '';
-          const match = content.match(/\[[\s\S]*\]/);
-          if (match) {
-            const parsed = JSON.parse(match[0]);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              return { provider: 'SpiderIA', plans: parsed, usage: reply.usage };
-            }
-          }
-        }
-      } catch (_) {
-        // Fallback below if SpiderIA is offline or unavailable
-      }
-    }
-    // Smart personalized fallback based on the couple's tastes
-    const food = coupleContext.foods?.filter(Boolean).join(' o ') || 'su comida favorita';
-    const series = coupleContext.movies?.filter(Boolean).join(' / ') || 'una peli sorpresa';
-    const weather = coupleContext.weathers?.[0] || 'Templado';
-    const favPlan = coupleContext.plans?.[0] || 'salida espontánea';
-    return {
-      provider: 'HifaIA (Local Contextual)',
-      plans: [
-        { title: `Cena temática preparando o pidiendo ${food} con velas y música`, category: 'Gastronomía', weather: 'Cualquiera' },
-        { title: `Maratón especial de ${series} con snacks y postres favoritos`, category: 'En casa', weather: 'Frío / Lluvia' },
-        { title: `Escapada de ${favPlan} aprovechando un día de clima ${weather}`, category: 'Aventura', weather }
-      ]
-    };
+    return ai.generateAiPlans(getConfig(), coupleContext);
+  }
+
+  async function listSpiderAiModels(overrides = {}) {
+    return ai.listSpiderAiModels(getConfig(), overrides);
+  }
+
+  async function testAiConfig(overrides = {}) {
+    return ai.testAiConfig(getConfig(), overrides);
   }
 
   const ctx = {
@@ -580,6 +541,8 @@ function initDb(customDataDir) {
     spiderListDatabases,
     saveUploadFile,
     generateAiPlans,
+    listSpiderAiModels,
+    testAiConfig,
     syncDbToCloud: () => syncDbToCloud(ctx),
     scheduleDbSync: (delay) => scheduleDbSync(ctx, delay),
     getLastSyncTime
