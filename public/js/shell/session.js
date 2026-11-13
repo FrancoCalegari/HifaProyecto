@@ -168,6 +168,10 @@ export function initAuth() {
   document.getElementById('btn-logout')?.addEventListener('click', async () => {
     await api('/api/auth/logout', { method: 'POST' }).catch(() => {});
     state.token = '';
+    state.booted = false;
+    state.user = null;
+    state.partner = null;
+    state.couple = null;
     localStorage.removeItem('hifa_token');
     showAuthView();
   });

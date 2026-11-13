@@ -1,5 +1,5 @@
 const crypto = require('node:crypto');
-const { hashPassword, verifyPassword, getAuthUser } = require('../lib/auth');
+const { hashPassword, verifyPassword, createSessionToken, getAuthUser } = require('../lib/auth');
 const { safeJson, defaultAvatarSvg } = require('../lib/helpers');
 
 function cookieFlags(req) {
@@ -32,10 +32,10 @@ module.exports = async function handle(c) {
       .run(first_name.trim(), last_name.trim(), Number(age), cleanEmail, pwHash, finalAvatar, pairCode);
 
     const userId = Number(info.lastInsertRowid);
-    const token = crypto.randomBytes(24).toString('hex');
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    const token = createSessionToken(user);
     db.prepare('INSERT INTO sessions (token, user_id) VALUES (?, ?)').run(token, userId);
 
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
     delete user.password_hash;
     user.tastes = safeJson(user.tastes_json, {});
 
@@ -122,7 +122,7 @@ module.exports = async function handle(c) {
     if (!foundUser || !verifyPassword(rawPassword, foundUser.password_hash)) {
       return send(401, { error: 'Credenciales inválidas.' });
     }
-    const token = crypto.randomBytes(24).toString('hex');
+    const token = createSessionToken(foundUser);
     activeDb.prepare('INSERT INTO sessions (token, user_id) VALUES (?, ?)').run(token, foundUser.id);
     if (activeCtx !== ctx && typeof activeCtx.scheduleDbSync === 'function') {
       activeCtx.scheduleDbSync(process.env.VERCEL ? 300 : 2500);

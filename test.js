@@ -529,6 +529,35 @@ async function runTests() {
     assert.equal(restoreRes.restoredFrom, backupCreateRes.backup.filename);
     assert.ok(restoreRes.safetyBackup.endsWith('.db'));
 
+    // 15. Stateless HMAC Session Tokens (cross-instance serverless auth)
+    const { verifySessionToken, getAuthUser } = require('./lib/auth');
+    const { DatabaseSync } = require('node:sqlite');
+    assert.ok(u1.token.startsWith('v1.'), 'Login/register token should use stateless v1 format');
+    const verifiedPayload = verifySessionToken(u1.token);
+    assert.ok(verifiedPayload && verifiedPayload.uid && verifiedPayload.email);
+    assert.equal(verifySessionToken(`${u1.token}tampered`), null);
+
+    const coldContainerDb = new DatabaseSync(':memory:');
+    coldContainerDb.exec(`
+      CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT, password_hash TEXT, tastes_json TEXT);
+      CREATE TABLE sessions (token TEXT PRIMARY KEY, user_id INTEGER, created_at TEXT);
+    `);
+    coldContainerDb.prepare('INSERT INTO users (id, name, email, password_hash, tastes_json) VALUES (?, ?, ?, ?, ?)').run(
+      999, 'Franco', verifiedPayload.email, 'x', '{}'
+    );
+    const resolvedCold = getAuthUser(coldContainerDb, {
+      headers: { authorization: `Bearer ${u1.token}` }
+    });
+    assert.ok(resolvedCold && resolvedCold.user, 'Signed token must authenticate even when sessions table is empty in another container');
+    assert.equal(resolvedCold.user.email, verifiedPayload.email);
+    coldContainerDb.close();
+
+    // Verify authenticated endpoints succeed with signed token
+    const meCheck = await req('/api/me', 'GET', null, u1.token);
+    assert.ok(meCheck.user);
+    const dashCheck = await req('/api/dashboard', 'GET', null, u1.token);
+    assert.ok(typeof dashCheck.days_together === 'number' && dashCheck.me);
+
     console.log('✓ Todos los tests de Fase 1, Fase 2, Herramientas, Vercel Serverless, Backups y SpiderWebAPI pasaron correctamente.');
   } finally {
     server.close();
