@@ -426,6 +426,53 @@ async function runTests() {
     const aiPlans = await req('/api/plans/ai', 'POST', {}, u1.token);
     assert.ok(aiPlans.plans.length >= 3);
 
+    // 11b. Planes (Citas) + Journaling completo (fechas, lugar, quién planeó, calificación, fotos y videos)
+    const planCreate = await req('/api/plans', 'POST', {
+      title: 'Picnic en el Rosedal',
+      category: 'Cita',
+      weather: 'Soleado',
+      location: 'Bosques de Palermo',
+      planned_by: 'Franco',
+      planned_date: '2026-11-12',
+      description: 'Llevar manta y algo dulce'
+    }, u1.token);
+    assert.ok(planCreate.id);
+
+    const planUpdated = await req(`/api/plans/${planCreate.id}`, 'PUT', {
+      status: 'completed',
+      rating: 5,
+      mood: 'Romántica',
+      journal_text: 'Salió increíble, vimos el atardecer juntos y sacamos muchas fotos.',
+      media: [
+        { url: '/uploads/pic1.jpg', type: 'image', name: 'pic1.jpg' },
+        { url: '/uploads/clip1.mp4', type: 'video', name: 'clip1.mp4' }
+      ]
+    }, u1.token);
+    assert.equal(planUpdated.ok, true);
+    assert.equal(planUpdated.plan.status, 'completed');
+    assert.equal(planUpdated.plan.rating, 5);
+    assert.equal(planUpdated.plan.location, 'Bosques de Palermo');
+    assert.equal(planUpdated.plan.planned_by, 'Franco');
+    assert.equal(planUpdated.plan.media.length, 2);
+    assert.equal(planUpdated.plan.media[1].type, 'video');
+
+    await req(`/api/plans/${planCreate.id}/select`, 'POST', {}, u1.token);
+    const { plans: allPlans } = await req('/api/plans', 'GET', null, u1.token);
+    const savedPlan = allPlans.find(p => p.id === planCreate.id);
+    assert.ok(savedPlan && savedPlan.selected_for_week === 1);
+
+    // También debe poder hacerse journaling sobre un plan base del sistema (clonándolo para la pareja)
+    const sysPlan = allPlans.find(p => p.couple_id === null);
+    if (sysPlan) {
+      const cloned = await req(`/api/plans/${sysPlan.id}`, 'PUT', {
+        status: 'completed',
+        rating: 4,
+        journal_text: 'Probamos este plan base y estuvo genial'
+      }, u1.token);
+      assert.equal(cloned.ok, true);
+      assert.ok(cloned.id !== sysPlan.id, 'System plan journal should clone into couple-owned plan');
+    }
+
     // 12. Ruletas personalizables para tomar decisiones
     const { roulettes: roulettesInitial } = await req('/api/roulettes', 'GET', null, u1.token);
     const initialCount = roulettesInitial.length; // 1 ruleta inicial sembrada por defecto
@@ -436,12 +483,20 @@ async function runTests() {
     }, u1.token);
     assert.ok(roulCreate.id);
 
+    const roulUpdate = await req(`/api/roulettes/${roulCreate.id}`, 'PUT', {
+      name: '¿Quién lava hoy?',
+      options: ['Franco', 'Daniela', 'Piedra papel o tijera', 'Turnarse']
+    }, u1.token);
+    assert.equal(roulUpdate.ok, true);
+    assert.equal(roulUpdate.roulette.name, '¿Quién lava hoy?');
+    assert.equal(roulUpdate.roulette.options.length, 4);
+
     const { roulettes: roulettesAfterAdd } = await req('/api/roulettes', 'GET', null, u1.token);
     assert.equal(roulettesAfterAdd.length, initialCount + 1);
     const foundRoul = roulettesAfterAdd.find(r => r.id === roulCreate.id);
     assert.ok(foundRoul);
-    assert.equal(foundRoul.name, '¿A quién le toca lavar los platos?');
-    assert.equal(foundRoul.options.length, 3);
+    assert.equal(foundRoul.name, '¿Quién lava hoy?');
+    assert.equal(foundRoul.options.length, 4);
 
     await req(`/api/roulettes/${roulCreate.id}`, 'DELETE', null, u1.token);
     const { roulettes: roulettesAfterDel } = await req('/api/roulettes', 'GET', null, u1.token);

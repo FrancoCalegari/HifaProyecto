@@ -330,6 +330,43 @@ function launchConfetti() {
   }
 }
 
+function attachLightDismissFallback(dialog) {
+  if (!dialog || 'closedBy' in HTMLDialogElement.prototype) return;
+  const outside = (e) => {
+    const r = dialog.getBoundingClientRect();
+    return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+  };
+  let pressedOutside = false;
+  dialog.addEventListener('pointerdown', (e) => { pressedOutside = outside(e); });
+  dialog.addEventListener('pointerup', (e) => {
+    if (pressedOutside && outside(e)) dialog.close();
+  });
+}
+
+function openRouletteConfigDialog(rouletteId) {
+  const dialog = document.getElementById('dialog-roulette-config');
+  if (!dialog) return;
+
+  const selectEl = document.getElementById('roul-config-select');
+  const idInput = document.getElementById('roul-config-id');
+  const nameInput = document.getElementById('roul-config-name');
+  const optsInput = document.getElementById('roul-config-opts');
+
+  const target =
+    cachedRoulettes.find(r => r.id === Number(rouletteId)) ||
+    cachedRoulettes.find(r => r.id === activeRoulette?.id) ||
+    cachedRoulettes[0];
+
+  if (!target) return;
+  if (selectEl) selectEl.value = String(target.id);
+  if (idInput) idInput.value = String(target.id);
+  if (nameInput) nameInput.value = target.name || '';
+  if (optsInput) optsInput.value = (target.options || []).join(', ');
+
+  dialog.returnValue = '';
+  dialog.showModal();
+}
+
 async function renderToolsTab(container, ctx) {
   // Cancelar animación en curso si la hubiera
   if (animFrameId) {
@@ -338,11 +375,7 @@ async function renderToolsTab(container, ctx) {
     isSpinning = false;
   }
 
-  const [{ roulettes }, { plans }] = await Promise.all([
-    api('/api/roulettes'),
-    api('/api/plans')
-  ]);
-
+  const { roulettes } = await api('/api/roulettes');
   cachedRoulettes = roulettes || [];
 
   // Definir ruleta activa por defecto
@@ -350,7 +383,6 @@ async function renderToolsTab(container, ctx) {
     activeRoulette = cachedRoulettes.length > 0 ? cachedRoulettes[0] : PRESETS[0];
   }
 
-  const selectedPlan = plans.find(p => p.selected_for_week);
   const activeOpts = activeRoulette?.options || PRESETS[0].options;
 
   container.innerHTML = `
@@ -364,15 +396,19 @@ async function renderToolsTab(container, ctx) {
               Activa: <strong>${escapeHtml(activeRoulette?.name || 'Ruleta')}</strong> (${activeOpts.length} opciones)
             </p>
           </div>
-          <button type="button" class="btn btn-sm" data-action="toggle-sound">
-            ${soundEnabled ? '<i class="fa-solid fa-volume-high"></i> Sonido' : '<i class="fa-solid fa-volume-xmark"></i> Silencio'}
-          </button>
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm" data-action="toggle-sound">
+              ${soundEnabled ? '<i class="fa-solid fa-volume-high"></i> Sonido' : '<i class="fa-solid fa-volume-xmark"></i> Silencio'}
+            </button>
+            <button type="button" class="btn btn-sm" data-action="open-roulettes-config" ${cachedRoulettes.length === 0 ? 'disabled' : ''}>
+              <i class="fa-solid fa-gear"></i> Configurar Ruletas
+            </button>
+          </div>
         </div>
 
         <!-- Escenario de la Ruleta -->
         <div class="roulette-stage" id="roulette-stage-box">
           <div class="roulette-wrapper">
-            <!-- Aguja indicadora superior -->
             <div class="roulette-needle" id="roulette-needle" title="Puntero">
               <svg width="34" height="44" viewBox="0 0 34 44" fill="none">
                 <path d="M17 44L4 12C1.5 6.5 5.5 1 11.5 1H22.5C28.5 1 32.5 6.5 30 12L17 44Z" fill="var(--brand)" stroke="#ffffff" stroke-width="2.5" />
@@ -380,26 +416,66 @@ async function renderToolsTab(container, ctx) {
               </svg>
             </div>
 
-            <!-- Canvas de la Ruleta -->
             <canvas id="roulette-canvas" class="roulette-canvas" width="340" height="340" data-action="spin-active-roulette" title="Haz clic para girar"></canvas>
 
-            <!-- Botón central de giro -->
             <button type="button" id="btn-center-spin" class="roulette-center-btn" data-action="spin-active-roulette" title="¡Girar la ruleta!">
               <span><i class="fa-solid fa-dice"></i></span>
               <span>GIRAR</span>
             </button>
           </div>
 
-          <!-- Botón de acción principal -->
           <div style="display:flex; gap:0.5rem; justify-content:center; margin-top:0.5rem;">
             <button type="button" id="btn-main-spin" class="btn btn-primary" data-action="spin-active-roulette" style="font-size:1.05rem; padding:0.6rem 1.8rem;">
               <i class="fa-solid fa-dice"></i> ¡Girar Ruleta!
             </button>
           </div>
 
-          <!-- Caja de Anuncio del Ganador -->
           <div class="roulette-winner-box" id="roulette-winner-box"></div>
         </div>
+      </section>
+
+      <!-- Columna 2: Ruletas Guardadas, Configuración y Plantillas -->
+      <section class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+          <h2 style="margin:0;"><i class="fa-solid fa-sliders" style="color:var(--brand);"></i> Ruletas Guardadas (${cachedRoulettes.length})</h2>
+          ${
+            cachedRoulettes.length > 0
+              ? `<button type="button" class="btn btn-sm" data-action="open-roulettes-config"><i class="fa-solid fa-gear"></i> Configurar</button>`
+              : ''
+          }
+        </div>
+
+        ${
+          cachedRoulettes.length === 0
+            ? '<p class="text-muted" style="font-size:0.9rem;">No tienes ruletas personalizadas creadas aún. Puedes usar las plantillas rápidas de abajo o crear una nueva.</p>'
+            : `<div style="display:flex; flex-direction:column; gap:0.5rem; max-height:260px; overflow-y:auto; padding-right:0.25rem;">
+                ${cachedRoulettes
+                  .map(r => {
+                    const isActive = activeRoulette?.id === r.id;
+                    return `
+                      <div class="stat-box ${isActive ? 'roulette-item-active' : ''}" style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; padding:0.55rem 0.75rem;">
+                        <div style="cursor:pointer; min-width:0; flex:1;" data-action="select-roulette" data-id="${r.id}">
+                          <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+                            <strong>${escapeHtml(r.name)}</strong>
+                            ${isActive ? '<span class="badge badge-success" style="font-size:0.7rem;"><i class="fa-solid fa-bullseye"></i> En Pantalla</span>' : ''}
+                          </div>
+                          <div class="text-muted" style="font-size:0.82rem; overflow-wrap:anywhere;">${r.options.map(escapeHtml).join(' · ')}</div>
+                        </div>
+                        <div style="display:flex; gap:0.35rem; align-items:center; flex-shrink:0;">
+                          ${
+                            !isActive
+                              ? `<button type="button" class="btn btn-sm" data-action="select-roulette" data-id="${r.id}" title="Cargar en la ruleta"><i class="fa-solid fa-arrows-rotate"></i> Cargar</button>`
+                              : ''
+                          }
+                          <button type="button" class="btn btn-sm" data-action="config-roulette" data-id="${r.id}" title="Configurar ruleta" aria-label="Configurar ${escapeHtml(r.name)}"><i class="fa-solid fa-gear"></i></button>
+                          <button type="button" class="btn btn-sm btn-primary" data-action="spin-specific-roulette" data-id="${r.id}" title="Girar esta ruleta"><i class="fa-solid fa-dice"></i></button>
+                          <button type="button" class="btn btn-sm btn-danger" data-action="delete-roulette" data-id="${r.id}" title="Eliminar ruleta"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                      </div>`;
+                  })
+                  .join('')}
+              </div>`
+        }
 
         <!-- Plantillas Rápidas -->
         <div style="margin-top:1.25rem;">
@@ -409,41 +485,6 @@ async function renderToolsTab(container, ctx) {
               (p, idx) => `<button type="button" class="roulette-preset-btn" data-action="apply-preset" data-preset-idx="${idx}">${escapeHtml(p.name)}</button>`
             ).join('')}
           </div>
-        </div>
-
-        <!-- Ruletas Guardadas -->
-        <div style="margin-top:1.25rem;">
-          <h3 style="font-size:1rem; margin-bottom:0.5rem;"><i class="fa-solid fa-clipboard-list"></i> Tus Ruletas Guardadas (${cachedRoulettes.length})</h3>
-          ${
-            cachedRoulettes.length === 0
-              ? '<p class="text-muted" style="font-size:0.9rem;">No tienes ruletas personalizadas creadas aún. Puedes usar las plantillas rápidas de arriba o crear una nueva abajo.</p>'
-              : `<div style="display:flex; flex-direction:column; gap:0.5rem; max-height:220px; overflow-y:auto; padding-right:0.25rem;">
-                  ${cachedRoulettes
-                    .map(r => {
-                      const isActive = activeRoulette?.id === r.id;
-                      return `
-                        <div class="stat-box ${isActive ? 'roulette-item-active' : ''}" style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; padding:0.55rem 0.75rem;">
-                          <div style="cursor:pointer;" data-action="select-roulette" data-id="${r.id}">
-                            <div style="display:flex; align-items:center; gap:0.4rem;">
-                              <strong>${escapeHtml(r.name)}</strong>
-                              ${isActive ? '<span class="badge badge-success" style="font-size:0.7rem;"><i class="fa-solid fa-bullseye"></i> En Pantalla</span>' : ''}
-                            </div>
-                            <div class="text-muted" style="font-size:0.82rem;">${r.options.map(escapeHtml).join(' · ')}</div>
-                          </div>
-                          <div style="display:flex; gap:0.35rem; align-items:center;">
-                            ${
-                              !isActive
-                                ? `<button type="button" class="btn btn-sm" data-action="select-roulette" data-id="${r.id}" title="Cargar en la ruleta"><i class="fa-solid fa-arrows-rotate"></i> Cargar</button>`
-                                : ''
-                            }
-                            <button type="button" class="btn btn-sm btn-primary" data-action="spin-specific-roulette" data-id="${r.id}" title="Girar esta ruleta"><i class="fa-solid fa-dice"></i></button>
-                            <button type="button" class="btn btn-sm btn-danger" data-action="delete-roulette" data-id="${r.id}" title="Eliminar ruleta"><i class="fa-solid fa-xmark"></i></button>
-                          </div>
-                        </div>`;
-                    })
-                    .join('')}
-                </div>`
-          }
         </div>
 
         <!-- Formulario: Nueva Ruleta -->
@@ -460,48 +501,63 @@ async function renderToolsTab(container, ctx) {
           <button type="submit" class="btn btn-primary">Guardar y Cargar en la Ruleta</button>
         </form>
       </section>
+    </div>
 
-      <!-- Columna 2: Planes Aleatorios de la Semana + IA -->
-      <section class="card">
-        <h2><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--brand);"></i> Planes Aleatorios de la Semana + IA</h2>
-        <div class="stat-box" style="margin-block-end:1rem; border-color:var(--brand);">
-          <div class="text-muted">Plan elegido para esta semana:</div>
-          <div class="stat-value" style="font-size:1.2rem;">
-            ${selectedPlan ? `<i class="fa-solid fa-star" style="color:#f59e0b;"></i> ${escapeHtml(selectedPlan.title)} (${escapeHtml(selectedPlan.category)})` : 'Aún no sortearon el plan de la semana'}
-          </div>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.6rem;">
-            <button type="button" class="btn btn-sm btn-primary" data-action="pick-random-plan"><i class="fa-solid fa-dice"></i> Sortear Plan Aleatorio</button>
-            <button type="button" class="btn btn-sm btn-primary" data-action="generate-ai-plans"><i class="fa-solid fa-robot"></i> Proponer Planes con IA (SpiderIA / Gustos)</button>
+    <!-- Modal nativo de configuración para ruletas guardadas -->
+    <dialog id="dialog-roulette-config" aria-labelledby="roul-config-title" closedby="any">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+        <h2 id="roul-config-title" style="margin:0;"><i class="fa-solid fa-gear" style="color:var(--brand);"></i> Configurar Ruleta Guardada</h2>
+        <button type="button" class="btn btn-sm" data-action="close-roulette-config" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-config-roulette">
+        <input type="hidden" id="roul-config-id" name="id">
+        ${
+          cachedRoulettes.length > 1
+            ? `<div class="field">
+                <label for="roul-config-select">Ruleta a editar</label>
+                <select id="roul-config-select">
+                  ${cachedRoulettes.map(r => `<option value="${r.id}">${escapeHtml(r.name)} (${r.options.length} opciones)</option>`).join('')}
+                </select>
+              </div>`
+            : ''
+        }
+        <div class="field">
+          <label for="roul-config-name">Nombre de la ruleta *</label>
+          <input type="text" id="roul-config-name" name="name" required autofocus>
+        </div>
+        <div class="field">
+          <label for="roul-config-opts">Opciones (separadas por coma o una por línea, mínimo 2) *</label>
+          <textarea id="roul-config-opts" name="options" rows="4" required></textarea>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-top:1rem;">
+          <button type="button" class="btn btn-danger btn-sm" data-action="delete-editing-roulette"><i class="fa-solid fa-trash-can"></i> Eliminar Ruleta</button>
+          <div style="display:flex; gap:0.5rem;">
+            <button type="button" class="btn" data-action="close-roulette-config">Cancelar</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar Cambios</button>
           </div>
         </div>
-
-        <form id="form-new-plan" style="display:grid; grid-template-columns: 2fr 1fr auto; gap:0.4rem; margin-block-end:1rem;">
-          <input type="text" name="title" placeholder="Proponer nuevo plan semanal *" aria-label="Título del plan" required>
-          <input type="text" name="weather" placeholder="Clima ideal" aria-label="Clima ideal">
-          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Añadir</button>
-        </form>
-
-        <ul style="list-style:none; padding:0; margin:0; max-height:420px; overflow-y:auto; display:flex; flex-direction:column; gap:0.4rem;">
-          ${plans
-            .map(
-              p => `<li class="stat-box" style="padding:0.5rem 0.75rem; display:flex; justify-content:space-between; align-items:center;">
-                <span>
-                  <span class="badge">${p.source === 'ai' ? '<i class="fa-solid fa-robot"></i> IA' : p.source === 'system' ? '<i class="fa-solid fa-star"></i> Sistema' : '<i class="fa-solid fa-heart"></i> Pareja'}</span>
-                  <strong>${escapeHtml(p.title)}</strong> <small class="text-muted">(${escapeHtml(p.weather)})</small>
-                </span>
-                ${p.couple_id ? `<button type="button" class="btn btn-sm btn-danger" data-action="delete-plan" data-id="${p.id}"><i class="fa-solid fa-xmark"></i></button>` : ''}
-              </li>`
-            )
-            .join('')}
-        </ul>
-      </section>
-    </div>
+      </form>
+    </dialog>
   `;
 
   // Inicializar dibujado del lienzo tras la inserción en el DOM
   const canvas = document.getElementById('roulette-canvas');
   if (canvas) {
     drawWheel(canvas, activeOpts, currentWheelAngle);
+  }
+
+  const dialog = document.getElementById('dialog-roulette-config');
+  attachLightDismissFallback(dialog);
+
+  const selectEl = document.getElementById('roul-config-select');
+  if (selectEl) {
+    selectEl.addEventListener('change', () => {
+      const chosen = cachedRoulettes.find(r => r.id === Number(selectEl.value));
+      if (!chosen) return;
+      document.getElementById('roul-config-id').value = String(chosen.id);
+      document.getElementById('roul-config-name').value = chosen.name || '';
+      document.getElementById('roul-config-opts').value = (chosen.options || []).join(', ');
+    });
   }
 }
 
@@ -547,7 +603,31 @@ export default {
         await ctx.refresh();
       }
     },
-    'apply-preset': (ctx, el) => {
+    'open-roulettes-config': (ctx) => {
+      if (cachedRoulettes.length === 0) {
+        ctx.showStatus('Primero crea o agrega una ruleta para poder configurarla.', true);
+        return;
+      }
+      openRouletteConfigDialog(activeRoulette?.id || cachedRoulettes[0].id);
+    },
+    'config-roulette': (_ctx, el) => {
+      openRouletteConfigDialog(Number(el.dataset.id));
+    },
+    'close-roulette-config': () => {
+      const dialog = document.getElementById('dialog-roulette-config');
+      if (dialog?.open) dialog.close();
+    },
+    'delete-editing-roulette': async (ctx) => {
+      const id = Number(document.getElementById('roul-config-id')?.value);
+      if (!id) return;
+      await api(`/api/roulettes/${id}`, { method: 'DELETE' });
+      const dialog = document.getElementById('dialog-roulette-config');
+      if (dialog?.open) dialog.close();
+      if (activeRoulette?.id === id) activeRoulette = null;
+      ctx.showStatus('Ruleta eliminada.');
+      ctx.refresh();
+    },
+    'apply-preset': (_ctx, el) => {
       const idx = Number(el.dataset.presetIdx);
       const preset = PRESETS[idx];
       if (!preset) return;
@@ -575,27 +655,12 @@ export default {
       }
       ctx.showStatus('Ruleta eliminada.');
       ctx.refresh();
-    },
-    'pick-random-plan': async (ctx) => {
-      const res = await api('/api/plans/random', { method: 'POST' });
-      ctx.showStatus(`Plan elegido: ${res.chosen.title}`);
-      ctx.refresh();
-    },
-    'generate-ai-plans': async (ctx) => {
-      ctx.showStatus('Generando planes personalizados con IA...');
-      const res = await api('/api/plans/ai', { method: 'POST' });
-      ctx.showStatus(`Se añadieron ${res.plans.length} planes propuestos por ${res.provider}.`);
-      ctx.refresh();
-    },
-    'delete-plan': async (ctx, el) => {
-      await api(`/api/plans/${el.dataset.id}`, { method: 'DELETE' });
-      ctx.refresh();
     }
   },
   forms: {
     'form-new-roulette': async (ctx, data) => {
       const res = await api('/api/roulettes', { method: 'POST', body: data });
-      const rawOpts = String(data.options || '').split(',').map(s => s.trim()).filter(Boolean);
+      const rawOpts = String(data.options || '').split(/[\n,]/).map(s => s.trim()).filter(Boolean);
       activeRoulette = {
         id: res.id,
         name: data.name,
@@ -604,8 +669,18 @@ export default {
       ctx.showStatus(`Ruleta "${data.name}" creada y cargada en pantalla.`);
       ctx.refresh();
     },
-    'form-new-plan': async (ctx, data) => {
-      await api('/api/plans', { method: 'POST', body: data });
+    'form-config-roulette': async (ctx, data) => {
+      const id = Number(data.id);
+      const res = await api(`/api/roulettes/${id}`, {
+        method: 'PUT',
+        body: { name: data.name, options: data.options }
+      });
+      if (res.roulette) {
+        activeRoulette = res.roulette;
+      }
+      const dialog = document.getElementById('dialog-roulette-config');
+      if (dialog?.open) dialog.close();
+      ctx.showStatus(`Ruleta "${data.name}" actualizada y cargada.`);
       ctx.refresh();
     }
   }

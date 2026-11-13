@@ -16,6 +16,7 @@ import goalsFeature from '../features/goals.js';
 import capsulesFeature from '../features/capsules.js';
 import notebooksFeature from '../features/notebooks.js';
 import toolsFeature from '../features/tools.js';
+import plansFeature from '../features/plans.js';
 import cycleFeature from '../features/cycle.js';
 import settingsFeature from '../features/settings.js';
 
@@ -33,6 +34,7 @@ const featuresList = [
   capsulesFeature,
   notebooksFeature,
   toolsFeature,
+  plansFeature,
   cycleFeature,
   settingsFeature
 ];

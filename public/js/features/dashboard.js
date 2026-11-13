@@ -47,7 +47,7 @@ async function renderDashboardTab(container) {
         ${goTo('goals', 'Ver metas')}</section>
       <section class="card"><h3><i class="fa-solid fa-wand-magic-sparkles"></i> Plan de la semana</h3>
         <p>${d.week_plan ? `<i class="fa-solid fa-star" style="color:#f59e0b;"></i> <strong>${escapeHtml(d.week_plan.title)}</strong> (${escapeHtml(d.week_plan.category)})` : '<span class="text-muted">Aún no sortearon el plan.</span>'}</p>
-        ${goTo('tools', 'Ir a planes')}</section>
+        ${goTo('plans', 'Ir a planes')}</section>
     </div>
 
     <section class="card"><h3><i class="fa-solid fa-heart"></i> Gustos rápidos</h3>

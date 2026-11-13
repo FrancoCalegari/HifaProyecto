@@ -196,6 +196,15 @@ function initDb(customDataDir) {
       source TEXT DEFAULT 'system',
       selected_for_week INTEGER DEFAULT 0,
       proposed_by INTEGER,
+      description TEXT DEFAULT '',
+      location TEXT DEFAULT '',
+      planned_by TEXT DEFAULT '',
+      planned_date TEXT DEFAULT '',
+      status TEXT DEFAULT 'pending',
+      rating INTEGER DEFAULT 0,
+      journal_text TEXT DEFAULT '',
+      mood TEXT DEFAULT '',
+      media_json TEXT DEFAULT '[]',
       created_at TEXT DEFAULT (datetime('now'))
     );
 
@@ -324,6 +333,20 @@ function initDb(customDataDir) {
   // Migración para bases ya existentes
   try { db.exec('ALTER TABLE users ADD COLUMN profile_completed INTEGER DEFAULT 0'); } catch (_) {}
   try { db.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'"); } catch (_) {}
+  const planMigrations = [
+    "ALTER TABLE weekly_plans ADD COLUMN description TEXT DEFAULT ''",
+    "ALTER TABLE weekly_plans ADD COLUMN location TEXT DEFAULT ''",
+    "ALTER TABLE weekly_plans ADD COLUMN planned_by TEXT DEFAULT ''",
+    "ALTER TABLE weekly_plans ADD COLUMN planned_date TEXT DEFAULT ''",
+    "ALTER TABLE weekly_plans ADD COLUMN status TEXT DEFAULT 'pending'",
+    "ALTER TABLE weekly_plans ADD COLUMN rating INTEGER DEFAULT 0",
+    "ALTER TABLE weekly_plans ADD COLUMN journal_text TEXT DEFAULT ''",
+    "ALTER TABLE weekly_plans ADD COLUMN mood TEXT DEFAULT ''",
+    "ALTER TABLE weekly_plans ADD COLUMN media_json TEXT DEFAULT '[]'"
+  ];
+  for (const sql of planMigrations) {
+    try { db.exec(sql); } catch (_) {}
+  }
 
   // Seed cuenta de Administrador por defecto si no existe ninguno
   try {
