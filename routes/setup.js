@@ -6,7 +6,18 @@ module.exports = async function handle(c) {
 
   if (apiPath === '/api/setup' && req.method === 'GET') {
     const cfg = getConfig();
-    return send(200, { config: cfg });
+    const auth = getAuthUser(db, req);
+    if (auth && auth.user.role === 'admin') {
+      return send(200, { config: cfg });
+    }
+    return send(200, {
+      config: {
+        db_mode: cfg.db_mode,
+        storage_mode: cfg.storage_mode,
+        spidercloudstrogaeid: cfg.spidercloudstrogaeid,
+        setup_completed: cfg.setup_completed
+      }
+    });
   }
 
   if (apiPath === '/api/setup' && req.method === 'POST') {
@@ -29,6 +40,10 @@ module.exports = async function handle(c) {
   }
 
   if (apiPath === '/api/spiderweb/test' && req.method === 'POST') {
+    const auth = getAuthUser(db, req);
+    if (!auth || auth.user.role !== 'admin') {
+      return send(403, { error: 'Acceso denegado: Se requiere rol de administrador.' });
+    }
     const body = await c.body();
     if (body.spiderapikey) updateConfig(body);
     try {

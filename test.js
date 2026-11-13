@@ -40,9 +40,20 @@ async function runTests() {
     assert.equal(mainJsRes.status, 200);
     assert.ok(mainJsRes.headers.get('content-type').includes('javascript'));
 
-    // 0. Check First-Time Setup & SpiderWebAPI config
+    // 0. Check First-Time Setup & SpiderWebAPI config (sin exponer spiderapikey a no-admins)
     const setup0 = await req('/api/setup');
     assert.equal(setup0.config.spidercloudstrogaeid, '47');
+    assert.equal(setup0.config.spiderapikey, undefined, 'spiderapikey must NOT be exposed publicly on /api/setup');
+
+    const unauthSpiderTest = await fetch(`${baseUrl}/api/spiderweb/test`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    assert.equal(unauthSpiderTest.status, 403, '/api/spiderweb/test must require admin role');
+
+    const adminJsCode = fs.readFileSync(path.join(__dirname, 'public', 'js', 'shell', 'admin.js'), 'utf8');
+    assert.ok(!adminJsCode.includes('admin123'), 'admin.js must NOT expose default password in UI');
 
     // 0b. Admin Account & Role Check
     const adminLogin = await req('/api/auth/login', 'POST', {

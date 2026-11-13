@@ -75,7 +75,7 @@ function renderAdminLoginForm(container, customMsg = '') {
         <form id="form-admin-login">
           <div class="field">
             <label for="admin-email">Correo de Administrador</label>
-            <input type="email" id="admin-email" name="email" value="admin@hifa.saas" required autocomplete="username">
+            <input type="email" id="admin-email" name="email" placeholder="admin@tudominio.com" required autocomplete="username">
           </div>
           <div class="field">
             <label for="admin-password">Contraseña</label>
@@ -85,12 +85,6 @@ function renderAdminLoginForm(container, customMsg = '') {
             <i class="fa-solid fa-lock"></i> Entrar como Administrador
           </button>
         </form>
-
-        <div class="stat-box" style="margin-top:1.25rem; font-size:0.85rem; border-left:3px solid var(--brand);">
-          <strong><i class="fa-regular fa-lightbulb"></i> Credenciales iniciales por defecto:</strong><br>
-          Usuario: <code>admin@hifa.saas</code><br>
-          Contraseña: <code>admin123</code>
-        </div>
 
         <div style="text-align:center; margin-top:1.25rem;">
           <button type="button" class="btn btn-sm" id="btn-admin-to-app">

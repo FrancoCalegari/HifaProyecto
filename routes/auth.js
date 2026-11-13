@@ -1,6 +1,11 @@
 const crypto = require('node:crypto');
-const { hashPassword, verifyPassword } = require('../lib/auth');
+const { hashPassword, verifyPassword, getAuthUser } = require('../lib/auth');
 const { safeJson, defaultAvatarSvg } = require('../lib/helpers');
+
+function cookieFlags(req) {
+  const isHttps = req.headers['x-forwarded-proto'] === 'https' || process.env.VERCEL === '1';
+  return `Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${isHttps ? '; Secure' : ''}`;
+}
 
 module.exports = async function handle(c) {
   const { req, apiPath, ctx, db, user, send } = c;
@@ -36,7 +41,7 @@ module.exports = async function handle(c) {
 
     return send(201,
       { token, user },
-      { 'Set-Cookie': `hifa_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000` }
+      { 'Set-Cookie': `hifa_token=${token}; ${cookieFlags(req)}` }
     );
   }
 
@@ -53,18 +58,18 @@ module.exports = async function handle(c) {
     user.tastes = safeJson(user.tastes_json, {});
     return send(200,
       { token, user },
-      { 'Set-Cookie': `hifa_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000` }
+      { 'Set-Cookie': `hifa_token=${token}; ${cookieFlags(req)}` }
     );
   }
 
   if (apiPath === '/api/auth/logout' && req.method === 'POST') {
-    const auth = getAuthUser(req);
+    const auth = getAuthUser(db, req);
     if (auth) {
       db.prepare('DELETE FROM sessions WHERE token = ?').run(auth.token);
     }
     return send(200,
       { ok: true },
-      { 'Set-Cookie': 'hifa_token=; Path=/; HttpOnly; Max-Age=0' }
+      { 'Set-Cookie': 'hifa_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0' }
     );
   }
 

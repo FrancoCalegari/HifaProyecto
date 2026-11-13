@@ -24,12 +24,21 @@ module.exports = async function handle(c) {
         )
         .all(user.couple_id, user.id);
     }
+    const rawCfg = getConfig();
+    const safeCfg = user.role === 'admin'
+      ? rawCfg
+      : {
+          db_mode: rawCfg.db_mode,
+          storage_mode: rawCfg.storage_mode,
+          setup_completed: rawCfg.setup_completed
+        };
+
     return send(200, {
       user,
       partner,
       couple,
       notifications,
-      config: getConfig()
+      config: safeCfg
     });
   }
 
