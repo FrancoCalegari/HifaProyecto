@@ -1,3 +1,8 @@
+process.env.NODE_ENV = 'test';
+process.env.CLOUD_SYNC = '0';
+process.env.DB_MODE = 'local';
+process.env.STORAGE_MODE = 'local';
+
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
