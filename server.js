@@ -82,7 +82,7 @@ function createApp(customDataDir) {
       }
 
       const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-      const pathname = urlObj.pathname;
+      const pathname = urlObj.searchParams.get('__route') || urlObj.pathname;
 
       // Detectar operaciones de mutación para sincronizar con la nube si aplica
       const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
