@@ -154,6 +154,33 @@ function createApp(customDataDir) {
   return { server, handler, ctx };
 }
 
+let defaultInstance = null;
+let defaultPromise = null;
+
+async function getDefaultApp() {
+  if (defaultInstance) return defaultInstance;
+  if (!defaultPromise) {
+    defaultPromise = (async () => {
+      const dataDir = process.env.DATA_DIR || (process.env.VERCEL ? path.join('/tmp', 'hifa-data') : undefined);
+      if (process.env.VERCEL || process.env.CLOUD_SYNC === '1') {
+        const { restoreDbFromCloud } = require('./lib/cloud-sync');
+        await restoreDbFromCloud(dataDir);
+      }
+      defaultInstance = createApp(dataDir);
+      return defaultInstance;
+    })();
+  }
+  return defaultPromise;
+}
+
+const defaultHandler = async (req, res) => {
+  const app = await getDefaultApp();
+  return app.handler(req, res);
+};
+
+defaultHandler.createApp = createApp;
+defaultHandler.getDefaultApp = getDefaultApp;
+
 if (require.main === module) {
   const port = Number(process.env.PORT || 3000);
   const { server } = createApp();
@@ -162,4 +189,6 @@ if (require.main === module) {
   });
 }
 
-module.exports = { createApp };
+module.exports = defaultHandler;
+module.exports.default = defaultHandler;
+module.exports.createApp = createApp;
