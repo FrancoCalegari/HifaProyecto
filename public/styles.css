@@ -874,6 +874,75 @@ input[type="file"] { font: inherit; padding: 0.5rem; border: 1.5px dashed var(--
 }
 .auth-grid .card { margin: 0; }
 
+.onboarding-steps {
+  margin: 0 auto 1.75rem;
+}
+.step-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: var(--surface);
+}
+.step-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.step-card p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.step-num {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--brand-grad);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.invite-banner:not([hidden]) {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(214, 31, 90, 0.1);
+  border: 1px solid var(--brand);
+  color: var(--text);
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+.auth-tabs {
+  display: none;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.auth-tab-btn {
+  flex: 1;
+  justify-content: center;
+}
+.auth-tab-btn.is-active {
+  background: var(--brand-grad);
+  color: var(--brand-text);
+  border-color: transparent;
+}
+
+@media (max-width: 860px) {
+  .auth-tabs {
+    display: flex;
+  }
+  .auth-grid[data-active-panel="login"] .auth-card[data-panel="register"],
+  .auth-grid[data-active-panel="register"] .auth-card[data-panel="login"] {
+    display: none;
+  }
+}
+
 /* Dialog + footer */
 dialog { box-shadow: 0 24px 60px -12px rgb(0 0 0 / 0.45); }
 dialog::backdrop { backdrop-filter: blur(4px); }

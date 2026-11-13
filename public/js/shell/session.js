@@ -60,6 +60,16 @@ export async function bootstrap() {
   }
 }
 
+function setAuthPanel(panel) {
+  const grid = document.getElementById('auth-grid');
+  if (grid) grid.dataset.activePanel = panel;
+  document.querySelectorAll('#auth-tabs .auth-tab-btn').forEach(btn => {
+    const active = btn.dataset.authPanel === panel;
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-selected', String(active));
+  });
+}
+
 export function showAuthView() {
   document.getElementById('auth-view').hidden = false;
   document.getElementById('app-shell').hidden = true;
@@ -69,6 +79,11 @@ export function showAuthView() {
   const adminBtn = document.getElementById('btn-admin-mode');
   if (adminBtn) adminBtn.hidden = true;
   document.getElementById('couple-badge').hidden = true;
+
+  const hasPairInvite = Boolean(new URLSearchParams(window.location.search).get('pair'));
+  const inviteBanner = document.getElementById('invite-banner');
+  if (inviteBanner) inviteBanner.hidden = !hasPairInvite;
+  if (hasPairInvite) setAuthPanel('register');
 }
 
 export function showAppShell() {
@@ -112,6 +127,12 @@ export function showAppShell() {
 }
 
 export function initAuth() {
+  document.getElementById('auth-tabs')?.addEventListener('click', e => {
+    const btn = e.target.closest('.auth-tab-btn[data-auth-panel]');
+    if (!btn) return;
+    setAuthPanel(btn.dataset.authPanel);
+  });
+
   document.getElementById('form-login')?.addEventListener('submit', async e => {
     e.preventDefault();
     try {

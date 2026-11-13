@@ -2,7 +2,7 @@ import { state } from '../core/state.js';
 import { api } from '../core/api.js';
 import { escapeHtml } from '../core/utils.js';
 
-/* ================= FASE 1: VINCULACIÓN Y FORMULARIO DE PAREJA ================= */
+/* ================= VINCULACIÓN Y FORMULARIO DE PAREJA ================= */
 function renderCoupleTab(container) {
   const urlPair = new URLSearchParams(window.location.search).get('pair') || '';
   if (!state.user.couple_id) {

@@ -94,7 +94,7 @@ export async function renderActiveTab() {
     currentFeature = null;
     container.innerHTML = `<section class="card">
       <h2><i class="fa-solid fa-link"></i> Vincula tu cuenta con tu pareja primero</h2>
-      <p>Para desbloquear todas las herramientas de Fase 2 (Economía, Tareas, Listas, Calendario, Ruleta, Pregunta del Día, Antojos, Cápsula del Tiempo, Metas y Cuadernos), primero vincúlate con tu pareja en la pestaña <strong>Pareja y Gustos</strong>.</p>
+      <p>Para desbloquear todas las herramientas compartidas (Economía, Tareas, Listas, Calendario, Ruleta, Planes y Citas, Pregunta del Día, Antojos, Cápsula del Tiempo, Metas, Cuadernos y Ciclo), primero vincúlate con tu pareja en la pestaña <strong>Pareja y Gustos</strong>.</p>
       <button type="button" class="btn btn-primary" data-action="go-couple"><i class="fa-solid fa-arrow-right"></i> Ir a Vincular Pareja</button>
     </section>`;
     return;

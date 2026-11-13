@@ -1,7 +1,7 @@
 import { api } from '../core/api.js';
 import { escapeHtml } from '../core/utils.js';
 
-/* ================= FASE 2: CALENDARIO Y RECORDATORIOS ================= */
+/* ================= CALENDARIO Y RECORDATORIOS ================= */
 async function renderCalendarTab(container) {
   const { events } = await api('/api/calendar');
 

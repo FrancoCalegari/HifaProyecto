@@ -1,7 +1,7 @@
 import { api } from '../core/api.js';
 import { escapeHtml, formatMoney } from '../core/utils.js';
 
-/* ================= FASE 2: LISTAS (COMPRAS, PRECIOS, ITEMS) ================= */
+/* ================= LISTAS (COMPRAS, PRECIOS, ITEMS) ================= */
 async function renderListsTab(container) {
   const { lists } = await api('/api/lists');
 

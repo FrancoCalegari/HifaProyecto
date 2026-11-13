@@ -2,7 +2,7 @@ import { state } from '../core/state.js';
 import { api } from '../core/api.js';
 import { escapeHtml } from '../core/utils.js';
 
-/* ================= FASE 2: TAREAS Y TABLEROS COMPARTIDOS ================= */
+/* ================= TAREAS Y TABLEROS COMPARTIDOS ================= */
 async function renderTasksTab(container) {
   const { tasks } = await api('/api/tasks');
   const boards = Array.from(new Set(['General', 'Hogar', 'Compras y Trámites', ...tasks.map(t => t.board_name)]));

@@ -28,21 +28,58 @@
   <!-- Auth View (Before Login) -->
   <main id="auth-view" class="main-area auth-view" hidden>
     <section class="hero" aria-labelledby="hero-title">
-      <p class="hero-eyebrow">Self-hosted · Privado · Para dos</p>
+      <p class="hero-eyebrow"><i class="fa-solid fa-heart" aria-hidden="true"></i> Privado · Para dos · Web y Móvil</p>
       <h2 id="hero-title">Organicen su vida en pareja, <span class="hero-accent">juntos</span>.</h2>
-      <p class="hero-lead">Gustos, economía compartida, tareas, calendario, notitas, metas y mucho más en un solo lugar que vive en tu propio servidor.</p>
-      <ul class="hero-features" aria-label="Características">
-        <li><i class="fa-solid fa-wallet"></i> Economía</li>
-        <li><i class="fa-solid fa-list-check"></i> Tareas</li>
-        <li><i class="fa-solid fa-calendar-days"></i> Calendario</li>
-        <li><i class="fa-solid fa-fire"></i> Pregunta del día</li>
-        <li><i class="fa-solid fa-hourglass-half"></i> Cápsula del tiempo</li>
-        <li><i class="fa-solid fa-bullseye"></i> Metas</li>
+      <p class="hero-lead">Economía compartida, planes y citas con IA, journaling con fotos y videos, tareas, notitas en vivo, metas y recuerdos en un solo espacio diseñado para ustedes.</p>
+      <ul class="hero-features" aria-label="Herramientas incluidas">
+        <li><i class="fa-solid fa-wallet" aria-hidden="true"></i> Economía</li>
+        <li><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Planes IA y Citas</li>
+        <li><i class="fa-solid fa-dharmachakra" aria-hidden="true"></i> Ruleta</li>
+        <li><i class="fa-solid fa-note-sticky" aria-hidden="true"></i> Notitas en vivo</li>
+        <li><i class="fa-solid fa-list-check" aria-hidden="true"></i> Tareas y Listas</li>
+        <li><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Calendario</li>
+        <li><i class="fa-solid fa-fire" aria-hidden="true"></i> Pregunta del día</li>
+        <li><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> Cápsula del tiempo</li>
+        <li><i class="fa-solid fa-bullseye" aria-hidden="true"></i> Metas</li>
       </ul>
     </section>
-    <div class="grid-2 auth-grid">
-      <section class="card" aria-labelledby="login-heading">
-        <h2 id="login-heading">Iniciar Sesión</h2>
+
+    <section class="onboarding-steps grid-3" aria-label="Cómo empezar en Hifa">
+      <article class="stat-box step-card">
+        <span class="step-num">1</span>
+        <h3>Crea tu cuenta</h3>
+        <p class="text-muted">Regístrate en segundos con tu correo y personaliza tu perfil.</p>
+      </article>
+      <article class="stat-box step-card">
+        <span class="step-num">2</span>
+        <h3>Vincula a tu pareja</h3>
+        <p class="text-muted">Comparte tu código o link único para conectar sus espacios al instante.</p>
+      </article>
+      <article class="stat-box step-card">
+        <span class="step-num">3</span>
+        <h3>Disfruten su espacio</h3>
+        <p class="text-muted">Planifiquen citas, organicen finanzas y guarden sus recuerdos juntos.</p>
+      </article>
+    </section>
+
+    <div id="invite-banner" class="invite-banner" role="status" hidden>
+      <i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i>
+      <span>¡Recibiste una invitación de pareja! Crea tu cuenta o inicia sesión para vincularte automáticamente.</span>
+    </div>
+
+    <div class="auth-tabs" id="auth-tabs" role="tablist" aria-label="Acceso o registro">
+      <button type="button" class="btn auth-tab-btn is-active" role="tab" aria-selected="true" data-auth-panel="login">
+        <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Ya tengo cuenta
+      </button>
+      <button type="button" class="btn auth-tab-btn" role="tab" aria-selected="false" data-auth-panel="register">
+        <i class="fa-solid fa-user-plus" aria-hidden="true"></i> Soy nuevo, crear cuenta
+      </button>
+    </div>
+
+    <div class="grid-2 auth-grid" id="auth-grid" data-active-panel="login">
+      <section class="card auth-card" data-panel="login" aria-labelledby="login-heading">
+        <h2 id="login-heading"><i class="fa-solid fa-right-to-bracket" style="color:var(--brand);" aria-hidden="true"></i> Iniciar Sesión</h2>
+        <p class="text-muted" style="margin-top:0;">Ingresa con tu cuenta para volver a tu espacio compartido.</p>
         <form id="form-login" action="/api/auth/login" method="POST">
           <div class="field">
             <label for="login-email">Correo electrónico *</label>
@@ -52,12 +89,13 @@
             <label for="login-password">Contraseña *</label>
             <input type="password" id="login-password" name="password" autocomplete="current-password" required>
           </div>
-          <button type="submit" class="btn btn-primary">Entrar a Hifa</button>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Entrar a Hifa</button>
         </form>
       </section>
 
-      <section class="card" aria-labelledby="register-heading">
-        <h2 id="register-heading">Crear Cuenta (Fase 1)</h2>
+      <section class="card auth-card" data-panel="register" aria-labelledby="register-heading">
+        <h2 id="register-heading"><i class="fa-solid fa-user-plus" style="color:var(--brand);" aria-hidden="true"></i> Crear Cuenta</h2>
+        <p class="text-muted" style="margin-top:0;">¿Primera vez aquí? Crea tu usuario y luego vincula a tu pareja.</p>
         <form id="form-register" action="/api/auth/register" method="POST">
           <div class="grid-2">
             <div class="field">
@@ -87,7 +125,7 @@
             <label for="reg-avatar-file">Foto de perfil (opcional, usa avatar por defecto si no se sube)</label>
             <input type="file" id="reg-avatar-file" accept="image/*">
           </div>
-          <button type="submit" class="btn btn-primary">Registrarme</button>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Registrarme gratis</button>
         </form>
       </section>
     </div>
@@ -197,7 +235,7 @@
   </dialog>
 
   <footer class="app-footer">
-    Hifa · SaaS para Parejas — API REST lista para Web y App Móvil (<code>/api/v1/*</code>)
+    Hifa Parejas · Tu espacio privado compartido en web y móvil
   </footer>
 
   <script type="module" src="/js/main.js"></script>

@@ -3,7 +3,7 @@ import { api } from '../core/api.js';
 import { escapeHtml, applyTheme } from '../core/utils.js';
 import { fileToUploadedUrl } from '../core/upload.js';
 
-/* ================= FASE 2: CONFIGURACIÓN INDIVIDUAL Y EN PAREJA ================= */
+/* ================= CONFIGURACIÓN INDIVIDUAL Y EN PAREJA ================= */
 function renderSettingsTab(container) {
   const u = state.user;
   container.innerHTML = `

@@ -5,7 +5,7 @@ import { escapeHtml, formatMoney } from '../core/utils.js';
 let editingWallet = null;
 let editingService = null;
 
-/* ================= FASE 2: ECONOMÍA, BILLETERAS Y ANALÍTICA ================= */
+/* ================= ECONOMÍA, BILLETERAS Y ANALÍTICA ================= */
 async function renderEconomyTab(container, ctx) {
   const data = await api('/api/economy');
   const { wallets, transactions, recurringServices = [], globalAnalytics } = data;
