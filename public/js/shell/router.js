@@ -2,6 +2,7 @@ import { state, profilesReady } from '../core/state.js';
 import { showStatus } from '../core/utils.js';
 import { bootstrap } from './session.js';
 import { openSetupDialog } from './dialogs.js';
+import { syncMobileNav } from './mobile-nav.js';
 
 import coupleFeature from '../features/couple.js';
 import dashboardFeature from '../features/dashboard.js';
@@ -84,6 +85,7 @@ export async function renderActiveTab() {
       btn.removeAttribute('aria-current');
     }
   });
+  syncMobileNav(state.activeTab);
 
   const container = document.getElementById('tab-content');
   if (!container) return;

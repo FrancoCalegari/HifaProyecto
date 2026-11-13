@@ -27,7 +27,7 @@ async function renderListsTab(container) {
             </div>
             <p class="text-muted">Total estimado: <strong>${formatMoney(l.totalPrice)}</strong> · Comprado: <strong class="text-ok">${formatMoney(l.checkedPrice)}</strong></p>
 
-            <form class="form-add-list-item" data-list-id="${l.id}" style="display:grid; grid-template-columns: 2fr 1fr 1fr auto; gap:0.4rem; margin-block-end:1rem;">
+            <form class="form-add-list-item list-item-form-grid" data-list-id="${l.id}">
               <input type="text" name="name" placeholder="Producto / ítem *" aria-label="Nombre del ítem" required>
               <input type="number" name="price" step="0.01" placeholder="Precio" aria-label="Precio">
               <input type="text" name="quantity" value="1" placeholder="Cant." aria-label="Cantidad">

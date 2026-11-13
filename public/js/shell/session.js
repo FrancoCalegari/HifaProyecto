@@ -64,6 +64,8 @@ export function showAuthView() {
   document.getElementById('auth-view').hidden = false;
   document.getElementById('app-shell').hidden = true;
   document.getElementById('btn-logout').hidden = true;
+  const mobileMenuBtn = document.getElementById('btn-mobile-menu');
+  if (mobileMenuBtn) mobileMenuBtn.hidden = true;
   const adminBtn = document.getElementById('btn-admin-mode');
   if (adminBtn) adminBtn.hidden = true;
   document.getElementById('couple-badge').hidden = true;
@@ -73,6 +75,8 @@ export function showAppShell() {
   document.getElementById('auth-view').hidden = true;
   document.getElementById('app-shell').hidden = false;
   document.getElementById('btn-logout').hidden = false;
+  const mobileMenuBtn = document.getElementById('btn-mobile-menu');
+  if (mobileMenuBtn) mobileMenuBtn.hidden = false;
   const adminBtn = document.getElementById('btn-admin-mode');
   if (adminBtn) {
     adminBtn.hidden = (state.user?.role !== 'admin');

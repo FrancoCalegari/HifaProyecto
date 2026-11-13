@@ -119,6 +119,7 @@ function initDrawingCanvas() {
   };
 
   canvas.addEventListener('pointerdown', e => {
+    canvas.setPointerCapture?.(e.pointerId);
     drawing = true;
     hasDrawn = true;
     c2d.strokeStyle = document.getElementById('notita-color')?.value || '#e11d48';

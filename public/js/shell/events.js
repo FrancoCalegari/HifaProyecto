@@ -1,6 +1,8 @@
 import { getCurrentFeature } from './router.js';
+import { initMobileDrawer } from './mobile-nav.js';
 
 export function initEvents(ctx) {
+  initMobileDrawer(ctx);
   // Navegación en la barra lateral
   document.getElementById('nav-list')?.addEventListener('click', e => {
     const btn = e.target.closest('.nav-btn');

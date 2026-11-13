@@ -229,7 +229,7 @@ async function renderPlansTab(container) {
       </div>
 
       <div class="grid-3" style="margin-bottom:1rem;">
-        <div class="stat-box" style="border-color:var(--brand); grid-column: span 2;">
+        <div class="stat-box span-2-desktop" style="border-color:var(--brand);">
           <div class="text-muted">Plan destacado de la semana:</div>
           <div class="stat-value" style="font-size:1.2rem; margin:0.25rem 0;">
             ${
