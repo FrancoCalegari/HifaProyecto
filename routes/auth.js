@@ -48,16 +48,89 @@ module.exports = async function handle(c) {
   if (apiPath === '/api/auth/login' && req.method === 'POST') {
     const body = await c.body();
     const cleanEmail = String(body.email || '').trim().toLowerCase();
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(cleanEmail);
-    if (!user || !verifyPassword(body.password || '', user.password_hash)) {
+    const rawPassword = String(body.password || '');
+    let activeDb = db;
+    let activeCtx = ctx;
+    let foundUser = activeDb.prepare('SELECT * FROM users WHERE LOWER(email) = ?').get(cleanEmail);
+
+    if (!foundUser || !verifyPassword(rawPassword, foundUser.password_hash)) {
+      const cfg = typeof activeCtx.getConfig === 'function' ? activeCtx.getConfig() : {};
+      const isCloudMode =
+        process.env.VERCEL === '1' ||
+        process.env.CLOUD_SYNC === '1' ||
+        cfg.db_mode === 'spiderweb';
+
+      if (isCloudMode && typeof activeCtx.reloadFromCloud === 'function') {
+        try {
+          const reloaded = await activeCtx.reloadFromCloud();
+          if (reloaded && reloaded.ctx && reloaded.ctx.db) {
+            activeCtx = reloaded.ctx;
+            activeDb = reloaded.ctx.db;
+            foundUser = activeDb.prepare('SELECT * FROM users WHERE LOWER(email) = ?').get(cleanEmail);
+          }
+        } catch (err) {
+          console.error('[Auth] Error al recargar DB desde Cloud Storage:', err.message);
+        }
+      }
+
+      if ((!foundUser || !verifyPassword(rawPassword, foundUser.password_hash)) &&
+          cfg.db_mode === 'spiderweb' && cfg.spiderapikey && cfg.spiderwebdbname &&
+          typeof activeCtx.spiderSqlQuery === 'function') {
+        try {
+          const escapedEmail = cleanEmail.replace(/'/g, "''");
+          const remoteRes = await activeCtx.spiderSqlQuery(
+            `SELECT * FROM users WHERE LOWER(email) = '${escapedEmail}' LIMIT 1`
+          );
+          const remoteUser = remoteRes && Array.isArray(remoteRes.result) ? remoteRes.result[0] : null;
+          if (remoteUser && verifyPassword(rawPassword, remoteUser.password_hash)) {
+            activeDb.prepare(`
+              INSERT INTO users (id, first_name, last_name, age, email, password_hash, avatar_url, couple_id, pair_code, tastes_json, profile_completed, role)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(email) DO UPDATE SET
+                first_name = excluded.first_name,
+                last_name = excluded.last_name,
+                age = excluded.age,
+                password_hash = excluded.password_hash,
+                avatar_url = excluded.avatar_url,
+                couple_id = excluded.couple_id,
+                pair_code = excluded.pair_code,
+                tastes_json = excluded.tastes_json,
+                profile_completed = excluded.profile_completed,
+                role = excluded.role
+            `).run(
+              remoteUser.id,
+              remoteUser.first_name || 'Usuario',
+              remoteUser.last_name || '',
+              Number(remoteUser.age || 18),
+              cleanEmail,
+              remoteUser.password_hash,
+              remoteUser.avatar_url || '',
+              remoteUser.couple_id || null,
+              remoteUser.pair_code || ('HIFA-' + crypto.randomBytes(3).toString('hex').toUpperCase()),
+              remoteUser.tastes_json || '{}',
+              Number(remoteUser.profile_completed || 0),
+              remoteUser.role || 'user'
+            );
+            foundUser = activeDb.prepare('SELECT * FROM users WHERE LOWER(email) = ?').get(cleanEmail);
+          }
+        } catch (err) {
+          console.error('[Auth] Error al consultar usuario remoto en SpiderWebAPI:', err.message);
+        }
+      }
+    }
+
+    if (!foundUser || !verifyPassword(rawPassword, foundUser.password_hash)) {
       return send(401, { error: 'Credenciales inválidas.' });
     }
     const token = crypto.randomBytes(24).toString('hex');
-    db.prepare('INSERT INTO sessions (token, user_id) VALUES (?, ?)').run(token, user.id);
-    delete user.password_hash;
-    user.tastes = safeJson(user.tastes_json, {});
+    activeDb.prepare('INSERT INTO sessions (token, user_id) VALUES (?, ?)').run(token, foundUser.id);
+    if (activeCtx !== ctx && typeof activeCtx.scheduleDbSync === 'function') {
+      activeCtx.scheduleDbSync(process.env.VERCEL ? 300 : 2500);
+    }
+    delete foundUser.password_hash;
+    foundUser.tastes = safeJson(foundUser.tastes_json, {});
     return send(200,
-      { token, user },
+      { token, user: foundUser },
       { 'Set-Cookie': `hifa_token=${token}; ${cookieFlags(req)}` }
     );
   }

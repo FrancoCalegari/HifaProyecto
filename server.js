@@ -88,7 +88,7 @@ function createApp(customDataDir) {
       const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
       if (isMutation && ctx.scheduleDbSync) {
         res.on('finish', () => {
-          if (res.statusCode >= 200 && res.statusCode < 400) {
+          if (!ctx._closed && res.statusCode >= 200 && res.statusCode < 400) {
             ctx.scheduleDbSync(process.env.VERCEL ? 300 : 2500);
           }
         });
@@ -156,17 +156,46 @@ function createApp(customDataDir) {
 
 let defaultInstance = null;
 let defaultPromise = null;
+let reloadPromise = null;
+
+function getDefaultDataDir() {
+  return process.env.DATA_DIR || (process.env.VERCEL ? path.join('/tmp', 'hifa-data') : undefined);
+}
+
+async function reloadDefaultAppFromCloud() {
+  if (reloadPromise) return reloadPromise;
+  reloadPromise = (async () => {
+    try {
+      const dataDir = getDefaultDataDir();
+      if (defaultInstance && defaultInstance.ctx) {
+        defaultInstance.ctx._closed = true;
+        try { defaultInstance.ctx.db.close(); } catch (_) {}
+      }
+      const { restoreDbFromCloud } = require('./lib/cloud-sync');
+      await restoreDbFromCloud(dataDir, { force: true });
+      const app = createApp(dataDir);
+      app.ctx.reloadFromCloud = reloadDefaultAppFromCloud;
+      defaultInstance = app;
+      return app;
+    } finally {
+      reloadPromise = null;
+    }
+  })();
+  return reloadPromise;
+}
 
 async function getDefaultApp() {
   if (defaultInstance) return defaultInstance;
   if (!defaultPromise) {
     defaultPromise = (async () => {
-      const dataDir = process.env.DATA_DIR || (process.env.VERCEL ? path.join('/tmp', 'hifa-data') : undefined);
+      const dataDir = getDefaultDataDir();
       if (process.env.VERCEL || process.env.CLOUD_SYNC === '1') {
         const { restoreDbFromCloud } = require('./lib/cloud-sync');
         await restoreDbFromCloud(dataDir);
       }
-      defaultInstance = createApp(dataDir);
+      const app = createApp(dataDir);
+      app.ctx.reloadFromCloud = reloadDefaultAppFromCloud;
+      defaultInstance = app;
       return defaultInstance;
     })();
   }
